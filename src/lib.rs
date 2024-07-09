@@ -12,6 +12,7 @@ mod tests {
 
     #[test]
     fn test() {
+        /*
         thread::spawn(|| {
             let mut utp_socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind.");
 
@@ -29,6 +30,18 @@ mod tests {
 
         let (packet, src) = utp_socket.receive();
         println!("{} {} {}", packet.header.connection_id, src.to_string(), String::from_utf8_lossy(packet.payload.as_slice()));
+        */
+        let mut utp_socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind.");
+        let (packet, src) = utp_socket.receive();
+
+        println!("[Syn {}] [ConnID Sending: {}] [ConnID Recv: {}] [SeqNr. {}] [AckNr: {}]",
+                packet.header.type_version,
+                packet.header.connection_id,
+                utp_socket.conn_id,
+                packet.header.seq_nr,
+                packet.header.ack_nr);
+
+        println!("{}", String::from_utf8_lossy(packet.payload.as_slice()));
 
         loop {
 

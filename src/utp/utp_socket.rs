@@ -8,7 +8,7 @@ use crate::utp::utp_packet::UtpPacket;
 
 pub struct UtpSocket {
     socket: UdpSocket,
-    conn_id: u16,
+    pub(crate) conn_id: u16,
     seq_nr: u16,
     ack_nr: u16,
 }
