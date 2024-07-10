@@ -3,6 +3,28 @@ use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
 use crate::utils::random;
+use crate::utp::utp_packet::HEADER_SIZE;
+
+const BUF_SIZE: usize = 1500;
+const GAIN: f64 = 1.0;
+const ALLOWED_INCREASE: u32 = 1;
+const TARGET: f64 = 100_000.0; // 100 milliseconds
+const MSS: u32 = 1400;
+const MIN_CWND: u32 = 2;
+const INIT_CWND: u32 = 2;
+const INITIAL_CONGESTION_TIMEOUT: u64 = 1000; // one second
+const MIN_CONGESTION_TIMEOUT: u64 = 500; // 500 ms
+const MAX_CONGESTION_TIMEOUT: u64 = 60_000; // one minute
+const BASE_HISTORY: usize = 10; // base delays history size
+const MAX_SYN_RETRIES: u32 = 5; // maximum connection retries
+const MAX_RETRANSMISSION_RETRIES: u32 = 5; // maximum retransmission retries
+const WINDOW_SIZE: u32 = 1024 * 1024; // local receive window size
+
+// Maximum time (in microseconds) to wait for incoming packets when the send window is full
+const PRE_SEND_TIMEOUT: u32 = 500_000;
+
+// Maximum age of base delay sample (60 seconds)
+//const MAX_BASE_DELAY_AGE: Delay = Delay(60_000_000);
 
 pub struct UtpSocket {
     socket: UdpSocket
@@ -49,6 +71,7 @@ impl UtpSocket {
     }
 
     pub fn recv(&self) {
+        let mut buf = [0; HEADER_SIZE+BUF_SIZE];
         todo!()
     }
 

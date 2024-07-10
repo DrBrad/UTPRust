@@ -1,7 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utp::utp_type::UtpType;
 
-const HEADER_SIZE: usize = 20;
+pub const HEADER_SIZE: usize = 20;
 
 /*
 0       4       8               16              24              32
