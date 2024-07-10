@@ -33,12 +33,15 @@ pub struct UtpSocket {
 impl UtpSocket {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        //take_address(addr).and_then(|a| UdpSocket::bind(a).map(|s| UtpSocket::from_raw_parts(s, a)))
-        todo!()
+        UdpSocket::bind(addr).map(|socket| Self {
+            socket
+        })
     }
 
     pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        todo!()
+        UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
+            socket
+        })
 
         /*
         let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)))?;
