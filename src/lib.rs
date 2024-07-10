@@ -1,6 +1,11 @@
 pub mod utp;
 pub mod utils;
 
+//INITIATER              ENDPOINT
+//      SYN ----------->
+//          <----------- STATE
+//     DATA ============ DATA
+
 #[cfg(test)]
 mod tests {
 
@@ -41,7 +46,10 @@ mod tests {
                 packet.header.seq_nr,
                 packet.header.ack_nr);
 
-        println!("{}", String::from_utf8_lossy(packet.payload.as_slice()));
+
+        //println!("{}", String::from_utf8_lossy(packet.payload.as_slice()));
+
+
 
         loop {
 
