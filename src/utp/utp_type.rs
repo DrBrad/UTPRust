@@ -1,16 +1,16 @@
 #[derive(Debug)]
 pub enum UtpType {
-    StData,
-    StFin,
-    StState,
-    StReset,
-    StSyn
+    Data,
+    Fin,
+    State,
+    Reset,
+    Syn
 }
 
 impl UtpType {
 
     pub fn from_value(value: &u8) -> Result<Self, ()> {
-        for _type in [Self::StData, Self::StFin, Self::StState, Self::StReset, Self::StSyn] {
+        for _type in [Self::Data, Self::Fin, Self::State, Self::Reset, Self::Syn] {
             if _type.value().eq(value) {
                 return Ok(_type);
             }
@@ -21,11 +21,11 @@ impl UtpType {
 
     pub fn value(&self) -> u8 {
         match self {
-            Self::StData => 0,
-            Self::StFin => 1,
-            Self::StState => 2,
-            Self::StReset => 3,
-            Self::StSyn => 4,
+            Self::Data => 0,
+            Self::Fin => 1,
+            Self::State => 2,
+            Self::Reset => 3,
+            Self::Syn => 4,
         }
     }
 }

@@ -34,8 +34,8 @@ mod tests {
         let mut utp_socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind.");
         let (packet, src) = utp_socket.receive();
 
-        println!("[Syn {}] [ConnID Sending: {}] [ConnID Recv: {}] [SeqNr. {}] [AckNr: {}]",
-                packet.header._type.value(),
+        println!("[{:?}] [ConnID Sending: {}] [ConnID Recv: {}] [SeqNr. {}] [AckNr: {}]",
+                packet.header._type,
                 packet.header.connection_id,
                 utp_socket.conn_id,
                 packet.header.seq_nr,

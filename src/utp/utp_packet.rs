@@ -42,7 +42,7 @@ impl UtpPacket {
     pub fn new(payload: Vec<u8>, conn_id: u16, seq_nr: u16, ack_nr: u16) -> Self {
         Self {
             header: UtpHeader {
-                _type: UtpType::StFin,
+                _type: UtpType::Fin,
                 version: 1,
                 extension: 0,
                 connection_id: conn_id,
