@@ -1,6 +1,7 @@
 use std::io;
 use std::io::{Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
+use std::sync::{Arc, Mutex};
 use crate::utils::random;
 
 pub struct UtpStream {
@@ -8,7 +9,8 @@ pub struct UtpStream {
     pub(crate) remote_addr: SocketAddr,
     pub(crate) conn_id: u16,
     pub(crate) seq_nr: u16,
-    pub(crate) ack_nr: u16
+    pub(crate) ack_nr: u16,
+    pub(crate) buffer: Arc<Mutex<Vec<u8>>>
 }
 
 impl UtpStream {
@@ -22,7 +24,8 @@ impl UtpStream {
             remote_addr,
             conn_id: random::gen(),
             seq_nr: 1,
-            ack_nr: 0
+            ack_nr: 0,
+            buffer: Arc::new(Mutex::new(Vec::new()))
         })
     }
 }

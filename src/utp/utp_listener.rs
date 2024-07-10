@@ -13,7 +13,7 @@ pub struct Incoming<'a> {
 
 pub struct UtpListener {
     socket: Arc<UdpSocket>,
-    streams: Arc<Mutex<HashMap<u16, UtpStream>>>,
+    streams: Arc<Mutex<HashMap<u16, Arc<Mutex<Vec<u8>>>>>>,
     receiver: Receiver<(UtpPacket, SocketAddr)>
 }
 
@@ -43,9 +43,16 @@ impl UtpListener {
 
                 match(packet.header._type) {
                     UtpType::Data => {
+                        //REJECT IF ISN'T KNOWN IE - BLACK HOLE...
                         if !streams.lock().unwrap().contains_key(&packet.header.connection_id) {
                             continue;
                         }
+
+                        println!("DATA MESSAGE");
+
+                        let mut buffer = streams.lock().unwrap().get_mut(&packet.header.connection_id).unwrap();
+                        //buffer.lock().unwrap().push(packet.payload);
+
                     },
                     UtpType::Fin => {
                         println!("FIN");
@@ -90,15 +97,17 @@ type Item = io::Result<UtpStream>;
             Ok((packet, src_addr)) => {
                 println!("CONNECTION");
 
+                let buffer = Arc::new(Mutex::new(Vec::new()));
+                self.listener.streams.lock().unwrap().insert(packet.header.connection_id, buffer.clone());
+
                 let stream = UtpStream {
                     socket: self.listener.socket.try_clone().unwrap(),
                     remote_addr: src_addr,
                     conn_id: packet.header.connection_id+1,
                     seq_nr: packet.header.seq_nr,
-                    ack_nr: packet.header.ack_nr
+                    ack_nr: packet.header.ack_nr,
+                    buffer
                 };
-
-                //self.listener.streams.lock().unwrap().insert(packet.header.connection_id, stream);
 
                 Some(Ok(stream))
             }
