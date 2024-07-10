@@ -63,6 +63,10 @@ mod tests {
 
         let listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
 
+        let mut buf = [0; 1500];
+        let n = listener.socket.recv(&mut buf).expect("FAILED_TO_GET_RECEIVE");
+        println!("END");
+
 
         /*
         for stream in listener.incoming() {

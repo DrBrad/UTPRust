@@ -14,15 +14,22 @@ pub struct Incoming<'a> {
 }
 
 pub struct UtpListener {
-    socket: UdpSocket
+    pub socket: UdpSocket
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+        let socket = UdpSocket::bind(addr)?;
+        socket.set_nonblocking(true);
+        Ok(Self {
+            socket
+        })
+        /*
         UdpSocket::bind(addr).map(|socket| Self {
             socket
         })
+        */
         /*
         let socket = Arc::new(UdpSocket::bind(addr)?);
         let streams = Arc::new(Mutex::new(HashMap::new()));
