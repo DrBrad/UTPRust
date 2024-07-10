@@ -49,13 +49,15 @@ mod tests {
                              packet.header.seq_nr,
                              packet.header.ack_nr);
                     */
-                    println!("[Socket: {}] [ConnID: {}] [SeqNr. {}] [AckNr. {}]",
+                    println!("[Socket: {}] [RecvConnID: {}] [SendConnID: {}] [SeqNr. {}] [AckNr. {}]",
                              stream.remote_addr,
-                             stream.conn_id, //SENDING BACK IS -1 I BELIEVE (INIT WILL GEN RANDOM CONN ID SEND = NUM+1, RECV = NUM)
+                             stream.recv_conn_id,
+                             stream.send_conn_id,
                              stream.seq_nr,
                              stream.ack_nr);
 
 
+                    /*
                     let mut buf = [0; 1500];
 
                     loop {
@@ -73,6 +75,7 @@ mod tests {
                         }
                     }
                     }
+                    */
 
 
 

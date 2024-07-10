@@ -1,7 +1,7 @@
 use std::{io, thread};
 use std::collections::HashMap;
-use std::io::Write;
-use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use std::io::{ErrorKind, Write};
+use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, RecvError, TryRecvError};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -14,14 +14,22 @@ pub struct Incoming<'a> {
 }
 
 pub struct UtpListener {
-    socket: Arc<UdpSocket>,
-    streams: Arc<Mutex<HashMap<u16, Arc<Mutex<Vec<u8>>>>>>,
-    receiver: Receiver<(UtpPacket, SocketAddr)>
+    socket: UdpSocket,//Arc<UdpSocket>,
+    incoming_buffer: Vec<UtpPacket>
+    //streams: HashMap<u16, Vec<u8>>,//Arc<Mutex<HashMap<u16, Arc<Mutex<Vec<u8>>>>>>,
+    //receiver: Receiver<(UtpPacket, SocketAddr)>
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+        let socket = UdpSocket::bind(addr)?;
+
+        Ok(Self {
+            socket,
+            incoming_buffer: Vec::new()
+        })
+        /*
         let socket = Arc::new(UdpSocket::bind(addr)?);
         let streams = Arc::new(Mutex::new(HashMap::new()));
         let (tx, rx) = channel();
@@ -79,6 +87,7 @@ impl UtpListener {
         });
 
         Ok(_self)
+        */
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
@@ -118,6 +127,72 @@ impl<'a> Iterator for Incoming<'a> {
 type Item = io::Result<UtpStream>;
 
     fn next(&mut self) -> Option<Self::Item> {
+
+        for packet in self.listener.incoming_buffer {
+            match packet.header._type {
+                UtpType::Syn => {
+                    //let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).unwrap();
+                    //let send_packet = UtpPacket::new(UtpType::State, packet.header.connection_id, 1, packet.header.seq_nr+1, None);
+
+                    //socket.send_to(send_packet.to_bytes().as_slice(), addr).unwrap();
+
+                    /*
+                    Some(Ok(UtpStream {
+                        socket,
+                        remote_addr: addr,
+                        recv_conn_id: packet.header.connection_id+1,
+                        send_conn_id: packet.header.connection_id,
+                        seq_nr: 1,
+                        ack_nr: 0,
+                        buffer: Vec::new(),
+                    }))
+                    */
+
+                    todo!()
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+
+        Some(Err())
+
+        /*
+        let mut buf = [0; 1500];
+
+        match self.listener.socket.recv_from(&mut buf) {
+            Ok((size, addr)) => {
+                let packet = UtpPacket::from_bytes(&buf[..size]);
+
+                match packet.header._type {
+                    UtpType::Syn => {
+                        let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).unwrap();
+                        let send_packet = UtpPacket::new(UtpType::State, packet.header.connection_id, 1, packet.header.seq_nr+1, None);
+
+                        socket.send_to(send_packet.to_bytes().as_slice(), addr).unwrap();
+
+                        Some(Ok(UtpStream {
+                            socket,
+                            remote_addr: addr,
+                            recv_conn_id: packet.header.connection_id+1,
+                            send_conn_id: packet.header.connection_id,
+                            seq_nr: 1,
+                            ack_nr: 0,
+                            buffer: Vec::new(),
+                        }))
+                    }
+                    _ => {
+                        Some(Err(io::Error::new(ErrorKind::Other, "Invalid type")))
+                    }
+                }
+            }
+            Err(e) => Some(Err(e))
+        }
+        */
+
+
+        /*
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
                 println!("CONNECTION");
@@ -142,6 +217,7 @@ type Item = io::Result<UtpStream>;
             }
             Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
         }
+        */
 
         /*
         let mut buf = [0; 1500];
