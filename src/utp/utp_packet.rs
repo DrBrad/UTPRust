@@ -27,13 +27,13 @@ pub struct UtpHeader {
     pub(crate) timestamp_diff: u32,
     pub(crate) wnd_size: u32,
     pub(crate) seq_nr: u16,
-    pub(crate) ack_nr: u16,
+    pub(crate) ack_nr: u16
 }
 
 #[derive(Debug)]
 pub struct UtpPacket {
     pub(crate) header: UtpHeader,
-    pub(crate) payload: Vec<u8>,
+    pub(crate) payload: Vec<u8>
 }
 
 
@@ -50,9 +50,9 @@ impl UtpPacket {
                 timestamp_diff: 0,
                 wnd_size: 0,
                 seq_nr,
-                ack_nr,
+                ack_nr
             },
-            payload,
+            payload
         }
     }
 
