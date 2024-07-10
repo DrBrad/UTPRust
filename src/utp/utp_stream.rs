@@ -6,13 +6,13 @@ use std::sync::{Arc, Mutex};
 use crate::utils::random;
 
 pub struct UtpStream {
-    pub(crate) socket: UdpSocket,
-    pub(crate) remote_addr: SocketAddr,
-    pub(crate) recv_conn_id: u16,
-    pub(crate) send_conn_id: u16,
-    pub(crate) seq_nr: u16,
-    pub(crate) ack_nr: u16,
-    pub(crate) buffer: Vec<u8>//Arc<Mutex<Vec<u8>>>
+    socket: UdpSocket,
+    remote_addr: SocketAddr,
+    recv_conn_id: u16,
+    send_conn_id: u16,
+    seq_nr: u16,
+    ack_nr: u16,
+    //buffer: Vec<u8>//Arc<Mutex<Vec<u8>>>
 }
 
 impl UtpStream {
@@ -30,7 +30,7 @@ impl UtpStream {
             send_conn_id: conn_id+1,
             seq_nr: 1,
             ack_nr: 0,
-            buffer: Vec::new()//Arc::new(Mutex::new(Vec::new()))
+            //buffer: Vec::new()//Arc::new(Mutex::new(Vec::new()))
         })
     }
 }
@@ -38,6 +38,7 @@ impl UtpStream {
 impl Read for UtpStream {
 
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        //self.socket.recv();
         todo!()
         /*
         let mut buffer = self.buffer.lock().unwrap();

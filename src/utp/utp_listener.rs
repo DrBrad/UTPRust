@@ -14,8 +14,8 @@ pub struct Incoming<'a> {
 }
 
 pub struct UtpListener {
-    socket: UdpSocket,//Arc<UdpSocket>,
-    incoming_buffer: Vec<UtpPacket>
+    socket: UdpSocket
+    //incoming_buffer: Vec<UtpPacket>
     //streams: HashMap<u16, Vec<u8>>,//Arc<Mutex<HashMap<u16, Arc<Mutex<Vec<u8>>>>>>,
     //receiver: Receiver<(UtpPacket, SocketAddr)>
 }
@@ -26,8 +26,8 @@ impl UtpListener {
         let socket = UdpSocket::bind(addr)?;
 
         Ok(Self {
-            socket,
-            incoming_buffer: Vec::new()
+            socket//,
+            //incoming_buffer: Vec::new()
         })
         /*
         let socket = Arc::new(UdpSocket::bind(addr)?);
@@ -127,8 +127,11 @@ impl<'a> Iterator for Incoming<'a> {
 type Item = io::Result<UtpStream>;
 
     fn next(&mut self) -> Option<Self::Item> {
-
-        for packet in self.listener.incoming_buffer {
+        todo!()
+    }
+}
+        /*
+        for packet in &self.listener.incoming_buffer {
             match packet.header._type {
                 UtpType::Syn => {
                     //let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).unwrap();
@@ -136,27 +139,26 @@ type Item = io::Result<UtpStream>;
 
                     //socket.send_to(send_packet.to_bytes().as_slice(), addr).unwrap();
 
-                    /*
-                    Some(Ok(UtpStream {
-                        socket,
-                        remote_addr: addr,
+                    /.*
+                    return Some(Ok(UtpStream {
+                        socket,//: self.listener.socket.clone(),
+                        remote_addr: SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)),
                         recv_conn_id: packet.header.connection_id+1,
                         send_conn_id: packet.header.connection_id,
                         seq_nr: 1,
                         ack_nr: 0,
                         buffer: Vec::new(),
-                    }))
-                    */
-
-                    todo!()
+                    }))*./
+                    //tosdo!()
                 }
                 _ => {
                     continue;
                 }
             }
         }
+        */
 
-        Some(Err(Self::Error("")))
+        //Some(Err(Self::Error("")))
 
         /*
         let mut buf = [0; 1500];
@@ -239,8 +241,6 @@ type Item = io::Result<UtpStream>;
             Err(e) => Some(Err(e))
         }
         */
-    }
-}
 
 /*
 pub fn try_clone(&self) -> io::Result<Self> {

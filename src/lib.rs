@@ -9,7 +9,7 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
-    use std::net::{Ipv4Addr, SocketAddr, TcpListener};
+    use std::net::{Ipv4Addr, SocketAddr, TcpListener, UdpSocket};
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
@@ -36,6 +36,30 @@ mod tests {
         let (packet, src) = utp_socket.receive();
         println!("{} {} {}", packet.header.connection_id, src.to_string(), String::from_utf8_lossy(packet.payload.as_slice()));
         */
+
+
+        /*
+        let server = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
+        let client = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7071))).unwrap();
+
+        let server_clone = server.try_clone().unwrap();
+        client.send_to("asdasd".as_bytes(), server_clone.local_addr().unwrap()).unwrap();
+
+        thread::sleep(Duration::from_secs(2));
+
+        thread::spawn(move || {
+            let mut buf = [0; 1500];
+            let (n, src_addr) = server.recv_from(&mut buf).unwrap();
+            println!("{}", String::from_utf8_lossy(&buf[..n]));
+        });
+
+
+
+
+        loop {}
+        */
+
+
         let listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
 
         for stream in listener.incoming() {
