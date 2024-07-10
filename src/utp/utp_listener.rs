@@ -8,7 +8,8 @@ pub struct Incoming<'a> {
 }
 
 pub struct UtpListener {
-    socket: UdpSocket
+    socket: UdpSocket,
+    streams: Vec<u16>
 }
 
 impl UtpListener {
@@ -17,7 +18,8 @@ impl UtpListener {
         let socket = UdpSocket::bind(addr)?;
 
         Ok(Self {
-            socket
+            socket,
+            streams: Vec::new()
         })
     }
 
@@ -43,6 +45,8 @@ impl<'a> Iterator for Incoming<'a> {
         match self.listener.socket.recv_from(&mut buf) {
             Ok((size, addr)) => {
                 let packet = UtpPacket::from_bytes(&buf[..size]);
+
+                //ADD STREAM TO MAP<connection_id, stream>
 
                 Some(Ok(UtpStream {
                     socket: self.listener.socket.try_clone().unwrap(),
