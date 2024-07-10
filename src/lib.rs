@@ -35,7 +35,7 @@ mod tests {
         let (packet, src) = utp_socket.receive();
 
         println!("[Syn {}] [ConnID Sending: {}] [ConnID Recv: {}] [SeqNr. {}] [AckNr: {}]",
-                packet.header._type,
+                packet.header._type.value(),
                 packet.header.connection_id,
                 utp_socket.conn_id,
                 packet.header.seq_nr,
