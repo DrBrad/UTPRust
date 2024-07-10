@@ -1,26 +1,72 @@
-use std::io;
+use std::{io, thread};
+use std::collections::HashMap;
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{channel, Receiver, RecvError, TryRecvError};
 use crate::utp::utp_packet::UtpPacket;
 use crate::utp::utp_stream::UtpStream;
+use crate::utp::utp_type::UtpType;
 
 pub struct Incoming<'a> {
     listener: &'a UtpListener,
 }
 
 pub struct UtpListener {
-    socket: UdpSocket,
-    streams: Vec<u16>
+    socket: Arc<UdpSocket>,
+    streams: Arc<Mutex<HashMap<u16, UtpStream>>>,
+    receiver: Receiver<(UtpPacket, SocketAddr)>
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        let socket = UdpSocket::bind(addr)?;
+        let socket = Arc::new(UdpSocket::bind(addr)?);
+        let streams = Arc::new(Mutex::new(HashMap::new()));
+        let (tx, rx) = channel();
+        let sender = tx.clone();
 
-        Ok(Self {
-            socket,
-            streams: Vec::new()
-        })
+        let _self = Self {
+            socket: socket.clone(),
+            streams: streams.clone(),
+            receiver: rx
+        };
+
+        let receiver_handle = thread::spawn(move || {
+            let mut buf = [0u8; 65535];
+
+            while true {
+                let (size, src_addr) = {
+                    socket.recv_from(&mut buf).expect("Failed to receive message")
+                };
+
+                let packet = UtpPacket::from_bytes(&buf[..size]);
+
+                match(packet.header._type) {
+                    UtpType::Data => {
+                        if !streams.lock().unwrap().contains_key(&packet.header.connection_id) {
+                            continue;
+                        }
+                    },
+                    UtpType::Fin => {
+                        println!("FIN");
+                    },
+                    UtpType::State => {
+                        println!("STATE");
+                    },
+                    UtpType::Reset => {
+                        println!("RESET");
+                    },
+                    UtpType::Syn => {
+                        println!("SYN {}", src_addr.to_string());
+                        sender.send((packet, src_addr)).unwrap();
+                    }
+                }
+
+                //sender.send((buf[..size].to_vec(), src_addr)).unwrap();
+            }
+        });
+
+        Ok(_self)
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
@@ -37,9 +83,29 @@ impl UtpListener {
 
 impl<'a> Iterator for Incoming<'a> {
 
-    type Item = io::Result<UtpStream>;
+type Item = io::Result<UtpStream>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        match self.listener.receiver.recv() {
+            Ok((packet, src_addr)) => {
+                println!("CONNECTION");
+
+                let stream = UtpStream {
+                    socket: self.listener.socket.try_clone().unwrap(),
+                    remote_addr: src_addr,
+                    conn_id: packet.header.connection_id+1,
+                    seq_nr: packet.header.seq_nr,
+                    ack_nr: packet.header.ack_nr
+                };
+
+                //self.listener.streams.lock().unwrap().insert(packet.header.connection_id, stream);
+
+                Some(Ok(stream))
+            }
+            Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
+        }
+
+        /*
         let mut buf = [0; 1500];
 
         match self.listener.socket.recv_from(&mut buf) {
@@ -58,6 +124,7 @@ impl<'a> Iterator for Incoming<'a> {
             }
             Err(e) => Some(Err(e))
         }
+        */
     }
 }
 
