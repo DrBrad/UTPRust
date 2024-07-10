@@ -74,33 +74,18 @@ impl UtpStream {
 impl Read for UtpStream {
 
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        //self.socket.recv();
-        todo!()
-        /*
-        let mut buffer = self.buffer.lock().unwrap();
-        let bytes_to_copy = min(buffer.len(), buf.len());
-
-        if bytes_to_copy == 0 {
-            return Ok(0);
-        }
-
-        buf[..bytes_to_copy].copy_from_slice(&buffer[..bytes_to_copy]);
-        buffer.drain(..bytes_to_copy);
-        Ok(bytes_to_copy)*/
-        //self.buffer.lock().unwrap().get()
-        //self.socket.recv(buf)
+        self.socket.recv_from(buf).map(|(read, _src)| read)
     }
 }
 
 impl Write for UtpStream {
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        todo!()
-        //self.socket.send_to(buf, self.remote_addr)
+        self.socket.send_to(buf)
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        Ok(())
+        self.socket.flush()
     }
 }
 

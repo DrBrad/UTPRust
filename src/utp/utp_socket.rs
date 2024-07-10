@@ -36,6 +36,10 @@ impl UtpSocket {
         */
     }
 
+    pub fn local_addr(&self) -> io::Result<SocketAddr> {
+        self.socket.local_addr()
+    }
+
     pub fn send(&self) {
         todo!()
     }
