@@ -39,10 +39,10 @@ pub struct UtpPacket {
 
 impl UtpPacket {
 
-    pub fn new(conn_id: u16, seq_nr: u16, ack_nr: u16, payload: Vec<u8>) -> Self {
+    pub fn new(_type: UtpType, conn_id: u16, seq_nr: u16, ack_nr: u16, payload: Option<Vec<u8>>) -> Self {
         Self {
             header: UtpHeader {
-                _type: UtpType::Fin,
+                _type,
                 version: 1,
                 extension: 0,
                 connection_id: conn_id,
@@ -52,7 +52,7 @@ impl UtpPacket {
                 seq_nr,
                 ack_nr
             },
-            payload: Some(payload)
+            payload
         }
     }
 

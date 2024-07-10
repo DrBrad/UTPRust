@@ -54,23 +54,11 @@ impl UtpListener {
 
                         println!("{}", streams.lock().unwrap().get(&packet.header.connection_id).unwrap().lock().unwrap().len());
 
-                        let packet = UtpPacket {
-                            header: UtpHeader {
-                                _type: UtpType::Data,
-                                version: 1,
-                                extension: 0,
-                                connection_id: packet.header.connection_id,
-                                timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
-                                timestamp_diff: 0,
-                                wnd_size: 0,
-                                seq_nr: 1, //Server Ack Number
-                                ack_nr: packet.header.seq_nr,
-                            },
-                            payload: None,
-                        }.to_bytes();
+
+                        let packet = UtpPacket::new(UtpType::Data, packet.header.connection_id, 1, packet.header.seq_nr, None);
 
                         //Self::send(&socket, src_addr, UtpType::Data, packet.header.connection_id, 1, packet.header.seq_nr, Vec::new());
-                        socket.send_to(packet.as_slice(), src_addr).unwrap();
+                        socket.send_to(packet.to_bytes().as_slice(), src_addr).unwrap();
 
                     },
                     UtpType::Fin => {
@@ -146,22 +134,9 @@ type Item = io::Result<UtpStream>;
                     buffer
                 };
 
-                let packet = UtpPacket {
-                    header: UtpHeader {
-                        _type: UtpType::State,
-                        version: 1,
-                        extension: 0,
-                        connection_id: packet.header.connection_id,
-                        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
-                        timestamp_diff: 0,
-                        wnd_size: 0,
-                        seq_nr: stream.ack_nr, //Server Ack Number
-                        ack_nr: packet.header.seq_nr+1,
-                    },
-                    payload: None,
-                }.to_bytes();
+                let packet = UtpPacket::new(UtpType::State, packet.header.connection_id, stream.ack_nr, packet.header.seq_nr+1, None);
 
-                self.listener.socket.send_to(packet.as_slice(), src_addr).unwrap();
+                self.listener.socket.send_to(packet.to_bytes().as_slice(), src_addr).unwrap();
 
                 Some(Ok(stream))
             }
