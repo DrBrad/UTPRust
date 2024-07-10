@@ -9,11 +9,12 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
-    use std::net::{Ipv4Addr, SocketAddr, TcpListener, UdpSocket};
+    use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
     use crate::utp::utp_listener::UtpListener;
+    use crate::utp::utp_stream::UtpStream;
 
     #[test]
     fn test() {
@@ -62,17 +63,19 @@ mod tests {
 
         let listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
 
+
+        /*
         for stream in listener.incoming() {
             match stream {
                 Ok(mut stream) => {
-                    /*
+                    /.*
                     println!("[{:?}] [ConnID Sending: {}] [ConnID Recv: {}] [SeqNr. {}] [AckNr: {}]",
                              packet.header._type,
                              packet.header.connection_id,
                              utp_socket.conn_id,
                              packet.header.seq_nr,
                              packet.header.ack_nr);
-                    */
+                    *./
                     println!("[Socket: {}] [RecvConnID: {}] [SendConnID: {}] [SeqNr. {}] [AckNr. {}]",
                              stream.remote_addr,
                              stream.recv_conn_id,
@@ -81,7 +84,7 @@ mod tests {
                              stream.ack_nr);
 
 
-                    /*
+                    /.*
                     let mut buf = [0; 1500];
 
                     loop {
@@ -99,7 +102,7 @@ mod tests {
                         }
                     }
                     }
-                    */
+                    *./
 
 
 
@@ -112,6 +115,7 @@ mod tests {
                 }
             }
         }
+        */
 
 
         /*
