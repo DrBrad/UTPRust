@@ -15,19 +15,13 @@ pub struct Incoming<'a> {
 
 pub struct UtpListener {
     socket: UdpSocket
-    //incoming_buffer: Vec<UtpPacket>
-    //streams: HashMap<u16, Vec<u8>>,//Arc<Mutex<HashMap<u16, Arc<Mutex<Vec<u8>>>>>>,
-    //receiver: Receiver<(UtpPacket, SocketAddr)>
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        let socket = UdpSocket::bind(addr)?;
-
-        Ok(Self {
-            socket//,
-            //incoming_buffer: Vec::new()
+        UdpSocket::bind(addr).map(|socket| Self {
+            socket
         })
         /*
         let socket = Arc::new(UdpSocket::bind(addr)?);
