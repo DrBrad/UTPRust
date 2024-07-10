@@ -156,7 +156,7 @@ type Item = io::Result<UtpStream>;
             }
         }
 
-        Some(Err())
+        Some(Err(Self::Error("")))
 
         /*
         let mut buf = [0; 1500];
