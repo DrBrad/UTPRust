@@ -51,7 +51,7 @@ mod tests {
                     */
                     println!("[Socket: {}]  [ConnID: {}] [SeqNr. {}] [AckNr. {}]",
                              stream.remote_addr,
-                             stream.conn_id,
+                             stream.conn_id, //SENDING BACK IS -1 I BELIEVE (INIT WILL GEN RANDOM CONN ID SEND = NUM+1, RECV = NUM)
                              stream.seq_nr,
                              stream.ack_nr);
                 },
