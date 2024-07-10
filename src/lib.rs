@@ -8,7 +8,7 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
+    use std::io::{Read, Write};
     use std::net::{Ipv4Addr, SocketAddr, TcpListener};
     use std::thread;
     use std::thread::sleep;
@@ -54,6 +54,24 @@ mod tests {
                              stream.conn_id, //SENDING BACK IS -1 I BELIEVE (INIT WILL GEN RANDOM CONN ID SEND = NUM+1, RECV = NUM)
                              stream.seq_nr,
                              stream.ack_nr);
+
+
+                    let mut buf = [0; 1500];
+
+                    match stream.read(&mut buf) {
+                        Ok(0) => {
+                            break;
+                        }
+                        Ok(n) => {
+                            println!("{}", String::from_utf8_lossy(&buf[..n]));
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to read from stream: {}", e);
+                            break;
+                        }
+                    }
+
+
 
                     //stream.write("hello world".as_bytes());
                     //stream.flush().unwrap();

@@ -1,9 +1,11 @@
 use std::{io, thread};
 use std::collections::HashMap;
+use std::io::Write;
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, RecvError, TryRecvError};
-use crate::utp::utp_packet::UtpPacket;
+use std::time::{SystemTime, UNIX_EPOCH};
+use crate::utp::utp_packet::{UtpHeader, UtpPacket};
 use crate::utp::utp_stream::UtpStream;
 use crate::utp::utp_type::UtpType;
 
@@ -48,11 +50,9 @@ impl UtpListener {
                             continue;
                         }
 
-                        println!("DATA MESSAGE");
+                        //println!("DATA MESSAGE");
 
-                        let mut buffer = streams.lock().unwrap().get_mut(&packet.header.connection_id).unwrap();
-                        //buffer.lock().unwrap().push(packet.payload);
-
+                        streams.lock().unwrap().get_mut(&packet.header.connection_id).unwrap().lock().unwrap().extend(packet.payload);
                     },
                     UtpType::Fin => {
                         println!("FIN");
@@ -80,7 +80,6 @@ impl UtpListener {
         self.socket.local_addr()
     }
 
-
     pub fn incoming(&self) -> Incoming<'_> {
         Incoming {
             listener: self
@@ -98,16 +97,33 @@ type Item = io::Result<UtpStream>;
                 println!("CONNECTION");
 
                 let buffer = Arc::new(Mutex::new(Vec::new()));
-                self.listener.streams.lock().unwrap().insert(packet.header.connection_id, buffer.clone());
+                self.listener.streams.lock().unwrap().insert(packet.header.connection_id+1, buffer.clone());
 
                 let stream = UtpStream {
                     socket: self.listener.socket.try_clone().unwrap(),
                     remote_addr: src_addr,
                     conn_id: packet.header.connection_id+1,
-                    seq_nr: packet.header.seq_nr,
-                    ack_nr: packet.header.ack_nr,
+                    seq_nr: 1,
+                    ack_nr: 0,
                     buffer
                 };
+
+                let packet = UtpPacket {
+                    header: UtpHeader {
+                        _type: UtpType::State,
+                        version: 1,
+                        extension: 0,
+                        connection_id: packet.header.connection_id,
+                        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
+                        timestamp_diff: 0,
+                        wnd_size: 0,
+                        seq_nr: stream.ack_nr, //Server Ack Number
+                        ack_nr: packet.header.seq_nr+1,
+                    },
+                    payload: vec![],
+                }.to_bytes();
+
+                self.listener.socket.send_to(packet.as_slice(), src_addr);
 
                 Some(Ok(stream))
             }
