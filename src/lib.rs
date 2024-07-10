@@ -9,11 +9,11 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
 
-    use std::net::{Ipv4Addr, SocketAddr};
+    use std::net::{Ipv4Addr, SocketAddr, TcpListener};
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
-    use crate::utp::utp_socket::UtpSocket;
+    use crate::utp::utp_listener::UtpListener;
 
     #[test]
     fn test() {
@@ -36,6 +36,33 @@ mod tests {
         let (packet, src) = utp_socket.receive();
         println!("{} {} {}", packet.header.connection_id, src.to_string(), String::from_utf8_lossy(packet.payload.as_slice()));
         */
+        let listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
+
+        for stream in listener.incoming() {
+            match stream {
+                Ok(mut stream) => {
+                    /*
+                    println!("[{:?}] [ConnID Sending: {}] [ConnID Recv: {}] [SeqNr. {}] [AckNr: {}]",
+                             packet.header._type,
+                             packet.header.connection_id,
+                             utp_socket.conn_id,
+                             packet.header.seq_nr,
+                             packet.header.ack_nr);
+                    */
+                    println!("[Socket: {}]  [ConnID: {}] [SeqNr. {}] [AckNr. {}]",
+                             stream.remote_addr,
+                             stream.conn_id,
+                             stream.seq_nr,
+                             stream.ack_nr);
+                },
+                Err(e) => {
+                    println!("{}", e);
+                }
+            }
+        }
+
+
+        /*
         let mut utp_socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind.");
         let (packet, src) = utp_socket.receive();
 
@@ -44,7 +71,7 @@ mod tests {
                 packet.header.connection_id,
                 utp_socket.conn_id,
                 packet.header.seq_nr,
-                packet.header.ack_nr);
+                packet.header.ack_nr);*/
 
 
         //println!("{}", String::from_utf8_lossy(packet.payload.as_slice()));
