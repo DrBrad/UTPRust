@@ -18,7 +18,8 @@ const HEADER_SIZE: usize = 20;
 */
 #[derive(Debug)]
 pub struct UtpHeader {
-    pub(crate) type_version: u8,
+    pub(crate) _type: u8,
+    pub(crate) version: u8,
     pub(crate) extension: u8,
     pub(crate) connection_id: u16,
     pub(crate) timestamp: u32,
@@ -40,7 +41,8 @@ impl UtpPacket {
     pub fn new(payload: Vec<u8>, conn_id: u16, seq_nr: u16, ack_nr: u16) -> Self {
         Self {
             header: UtpHeader {
-                type_version: 1, // Set appropriate type and version
+                _type: 1,
+                version: 1,
                 extension: 0,
                 connection_id: conn_id,
                 timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
@@ -55,7 +57,7 @@ impl UtpPacket {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = vec![0u8; HEADER_SIZE + self.payload.len()];
-        bytes[0] = self.header.type_version;
+        bytes[0] = (self.header._type << 4) | (self.header.version & 0x0F);
         bytes[1] = self.header.extension;
         bytes[2..4].copy_from_slice(&self.header.connection_id.to_be_bytes());
         bytes[4..8].copy_from_slice(&self.header.timestamp.to_be_bytes());
@@ -69,7 +71,8 @@ impl UtpPacket {
 
     pub fn from_bytes(bytes: &[u8]) -> Self {
         let header = UtpHeader {
-            type_version: bytes[0],
+            _type: bytes[0] >> 4,
+            version: bytes[0] & 0x0F,
             extension: bytes[1],
             connection_id: u16::from_be_bytes([bytes[2], bytes[3]]),
             timestamp: u32::from_be_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]),
