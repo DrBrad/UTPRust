@@ -37,7 +37,8 @@ impl Read for UtpStream {
 impl Write for UtpStream {
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.socket.send_to(buf, self.remote_addr)
+        todo!()
+        //self.socket.send_to(buf, self.remote_addr)
     }
 
     fn flush(&mut self) -> io::Result<()> {
