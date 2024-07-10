@@ -33,13 +33,13 @@ pub struct UtpHeader {
 #[derive(Debug)]
 pub struct UtpPacket {
     pub(crate) header: UtpHeader,
-    pub(crate) payload: Vec<u8>
+    pub(crate) payload: Option<Vec<u8>>
 }
 
 
 impl UtpPacket {
 
-    pub fn new(payload: Vec<u8>, conn_id: u16, seq_nr: u16, ack_nr: u16) -> Self {
+    pub fn new(conn_id: u16, seq_nr: u16, ack_nr: u16, payload: Vec<u8>) -> Self {
         Self {
             header: UtpHeader {
                 _type: UtpType::Fin,
@@ -52,12 +52,23 @@ impl UtpPacket {
                 seq_nr,
                 ack_nr
             },
-            payload
+            payload: Some(payload)
         }
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = vec![0u8; HEADER_SIZE + self.payload.len()];
+        let mut bytes;// = vec![0u8; HEADER_SIZE + self.payload.as_ref().unwrap().len()];
+
+        match self.payload.as_ref() {
+            Some(payload) => {
+                bytes = vec![0u8; HEADER_SIZE + payload.len()];
+                bytes[HEADER_SIZE..].copy_from_slice(&payload);
+            }
+            None => {
+                bytes = vec![0u8; HEADER_SIZE];
+            }
+        }
+        //let mut bytes = vec![0u8; HEADER_SIZE + self.payload.as_ref().unwrap().len()];
         bytes[0] = (self.header._type.value() << 4) | (self.header.version & 0x0F);
         bytes[1] = self.header.extension;
         bytes[2..4].copy_from_slice(&self.header.connection_id.to_be_bytes());
@@ -66,7 +77,7 @@ impl UtpPacket {
         bytes[12..16].copy_from_slice(&self.header.wnd_size.to_be_bytes());
         bytes[16..18].copy_from_slice(&self.header.seq_nr.to_be_bytes());
         bytes[18..20].copy_from_slice(&self.header.ack_nr.to_be_bytes());
-        bytes[HEADER_SIZE..].copy_from_slice(&self.payload);
+        //bytes[HEADER_SIZE..].copy_from_slice(&self.as_ref().payload.unwrap());
         bytes
     }
 
@@ -82,10 +93,10 @@ impl UtpPacket {
             seq_nr: u16::from_be_bytes([bytes[16], bytes[17]]),
             ack_nr: u16::from_be_bytes([bytes[18], bytes[19]]),
         };
-        let payload = bytes[HEADER_SIZE..].to_vec();
+
         Self {
             header,
-            payload
+            payload: Some(bytes[HEADER_SIZE..].to_vec())
         }
     }
 }

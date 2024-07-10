@@ -58,9 +58,11 @@ mod tests {
 
                     let mut buf = [0; 1500];
 
+                    loop {
                     match stream.read(&mut buf) {
                         Ok(0) => {
-                            break;
+                            //println!("Empty");
+                            //break;
                         }
                         Ok(n) => {
                             println!("{}", String::from_utf8_lossy(&buf[..n]));
@@ -69,6 +71,7 @@ mod tests {
                             eprintln!("Failed to read from stream: {}", e);
                             break;
                         }
+                    }
                     }
 
 

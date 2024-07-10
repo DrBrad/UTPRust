@@ -50,15 +50,34 @@ impl UtpListener {
                             continue;
                         }
 
-                        //println!("DATA MESSAGE");
+                        streams.lock().unwrap().get_mut(&packet.header.connection_id).unwrap().lock().unwrap().extend(packet.payload.unwrap());
 
-                        streams.lock().unwrap().get_mut(&packet.header.connection_id).unwrap().lock().unwrap().extend(packet.payload);
+                        println!("{}", streams.lock().unwrap().get(&packet.header.connection_id).unwrap().lock().unwrap().len());
+
+                        let packet = UtpPacket {
+                            header: UtpHeader {
+                                _type: UtpType::Data,
+                                version: 1,
+                                extension: 0,
+                                connection_id: packet.header.connection_id,
+                                timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
+                                timestamp_diff: 0,
+                                wnd_size: 0,
+                                seq_nr: 1, //Server Ack Number
+                                ack_nr: packet.header.seq_nr,
+                            },
+                            payload: None,
+                        }.to_bytes();
+
+                        //Self::send(&socket, src_addr, UtpType::Data, packet.header.connection_id, 1, packet.header.seq_nr, Vec::new());
+                        socket.send_to(packet.as_slice(), src_addr).unwrap();
+
                     },
                     UtpType::Fin => {
                         println!("FIN");
                     },
                     UtpType::State => {
-                        println!("STATE");
+                        println!("STATE"); //SHOULDNT OCCUR
                     },
                     UtpType::Reset => {
                         println!("RESET");
@@ -68,8 +87,6 @@ impl UtpListener {
                         sender.send((packet, src_addr)).unwrap();
                     }
                 }
-
-                //sender.send((buf[..size].to_vec(), src_addr)).unwrap();
             }
         });
 
@@ -85,6 +102,27 @@ impl UtpListener {
             listener: self
         }
     }
+
+    /*
+    pub fn send(socket: &UdpSocket, src_addr: SocketAddr, _type: UtpType, connection_id: u16, seq_nr: u16, ack_nr: u16, payload: Vec<u8>) {
+        let packet = UtpPacket {
+            header: UtpHeader {
+                _type,
+                version: 1,
+                extension: 0,
+                connection_id,
+                timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
+                timestamp_diff: 0,
+                wnd_size: 0,
+                seq_nr, //Server Ack Number
+                ack_nr,
+            },
+            payload,
+        }.to_bytes();
+
+        socket.send_to(packet.as_slice(), src_addr).unwrap();
+    }
+    */
 }
 
 impl<'a> Iterator for Incoming<'a> {
@@ -120,10 +158,10 @@ type Item = io::Result<UtpStream>;
                         seq_nr: stream.ack_nr, //Server Ack Number
                         ack_nr: packet.header.seq_nr+1,
                     },
-                    payload: vec![],
+                    payload: None,
                 }.to_bytes();
 
-                self.listener.socket.send_to(packet.as_slice(), src_addr);
+                self.listener.socket.send_to(packet.as_slice(), src_addr).unwrap();
 
                 Some(Ok(stream))
             }
