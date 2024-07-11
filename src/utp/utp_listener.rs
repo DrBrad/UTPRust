@@ -54,19 +54,13 @@ impl UtpListener {
 
                 match packet.header._type {
                     UtpType::Data => {
-
-                        println!("DATA");
                         let conn_id = packet.header.conn_id;
 
                         if !channels.lock().unwrap().contains_key(&conn_id) {
-                            println!("SKIP");
                             continue;
                         }
-                        println!("DATA2");
 
-                        channels.lock().unwrap().get_mut(&conn_id).unwrap().send(packet).unwrap();
-
-                        println!("DATA3");
+                        channels.lock().unwrap().get_mut(&conn_id).unwrap().send(packet);
 
 
                         //self.streams.get()

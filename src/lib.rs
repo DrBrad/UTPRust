@@ -65,10 +65,15 @@ mod tests {
         //let stream = listener.incoming().next().unwrap();
         for socket in listener.incoming() {
             match socket {
-                Ok(socket) => {
+                Ok(mut socket) => {
                     println!("NEW SOCKET");
                     let mut buf = [0; 1500];
-                    socket.recv(&mut buf);
+                    let n = socket.recv(&mut buf).unwrap();
+
+                    println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
+
+                    socket.close().unwrap();
+
                 },
                 Err(e) => {
                     //println!("{}", e);

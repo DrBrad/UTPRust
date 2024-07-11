@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::cmp::min;
 use std::collections::HashMap;
 use std::io;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
@@ -9,6 +10,7 @@ use std::time::Duration;
 use crate::utils::random;
 use crate::utp::utp_listener::UtpListener;
 use crate::utp::utp_packet::{HEADER_SIZE, UtpPacket};
+use crate::utp::utp_type::UtpType;
 
 const BUF_SIZE: usize = 1500;
 const GAIN: f64 = 1.0;
@@ -38,7 +40,8 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16,
-    pub(crate) receiver: Option<Receiver<UtpPacket>>
+    pub(crate) receiver: Option<Receiver<UtpPacket>>,
+    //pub(crate) buffer: Vec<u8>
     //pub(crate) incoming_packets: Rc<RefCell<Vec<UtpPacket>>>
 }
 
@@ -53,7 +56,8 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            receiver: None
+            receiver: None,
+            //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
     }
@@ -67,7 +71,8 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            receiver: None
+            receiver: None,
+            //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
     }
@@ -84,7 +89,7 @@ impl UtpSocket {
         todo!()
     }
 
-    pub fn recv(&self, buf: &[u8]) -> io::Result<usize> {
+    pub fn recv(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let packet = match &self.receiver {
             Some(receiver) => {
                 receiver.recv().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?
@@ -96,9 +101,22 @@ impl UtpSocket {
             }
         };
 
-        println!("RECEIVED");
+        self.seq_nr += 1;
+        self.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, self.seq_nr, packet.header.seq_nr+1, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
 
-        todo!()
+        match packet.payload {
+            Some(data) => {
+                let len = min(buf.len(), data.len());
+                buf[..len].copy_from_slice(&data[..len]);
+                Ok(len)
+            }
+            None => Err(io::Error::new(io::ErrorKind::Other, "No data"))
+        }
+
+        // Remove the copied bytes from the Vec<u8>
+        //drain(..len);
+
+
         /*
         match self.listener.as_ref() {
             Some(listener) => {
@@ -131,6 +149,7 @@ impl UtpSocket {
     }
 
     pub fn close(&mut self) -> io::Result<()> {
-        todo!()
+        self.socket.send_to(UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+        Ok(())
     }
 }
