@@ -63,9 +63,9 @@ mod tests {
 
         let listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
         //let stream = listener.incoming().next().unwrap();
-        for stream in listener.incoming() {
-            match stream {
-                Ok(stream) => {
+        for socket in listener.incoming() {
+            match socket {
+                Ok(socket) => {
                 },
                 Err(e) => {
                     println!("{}", e);

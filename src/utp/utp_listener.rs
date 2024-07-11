@@ -196,7 +196,7 @@ impl UtpListener {
 
 impl<'a> Iterator for Incoming<'a> {
 
-    type Item = io::Result<UtpStream>;
+    type Item = io::Result<UtpSocket>;
 
     fn next(&mut self) -> Option<Self::Item> {
         //self.listener.recv();
@@ -211,12 +211,9 @@ impl<'a> Iterator for Incoming<'a> {
             Ok((packet, src_addr)) => {
                 println!("PACKET RECEIVED");
 
-                let stream = UtpStream::connect(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).unwrap();
-                Some(
-                    Ok(
-                        stream
-                    )
-                )
+                Some(Ok(UtpSocket {
+                    socket: self.listener.socket.try_clone().unwrap()
+                }))
             }
             Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
         }

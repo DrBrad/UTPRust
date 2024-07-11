@@ -29,7 +29,7 @@ const PRE_SEND_TIMEOUT: u32 = 500_000;
 //const MAX_BASE_DELAY_AGE: Delay = Delay(60_000_000);
 
 pub struct UtpSocket {
-    socket: UdpSocket
+    pub(crate) socket: UdpSocket
 }
 
 impl UtpSocket {
