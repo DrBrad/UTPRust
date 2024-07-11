@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Receiver, RecvError, TryRecvError};
+use std::sync::mpsc::{channel, Receiver, RecvError, Sender, TryRecvError};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utp::utp_packet::{HEADER_SIZE, UtpHeader, UtpPacket};
 use crate::utp::utp_socket::UtpSocket;
@@ -13,7 +13,7 @@ use crate::utp::utp_type::UtpType;
 
 pub struct UtpListener {
     pub socket: UdpSocket,
-    buffers: Arc<Mutex<HashMap<u16, Rc<RefCell<Vec<UtpPacket>>>>>>,
+    channels: Arc<Mutex<HashMap<u16, Sender<UtpPacket>>>>,
     //syn_queue: Vec<UtpPacket>
     receiver: Receiver<(UtpPacket, SocketAddr)>
     //incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
@@ -28,7 +28,7 @@ impl UtpListener {
 
         let _self = Self {
             socket,//: UdpSocket::bind(addr)?,
-            buffers: Arc::new(Mutex::new(HashMap::new())),
+            channels: Arc::new(Mutex::new(HashMap::new())),
             //syn_queue: Vec::new()
             receiver: rx
             //new_connections: HashMap::new()
@@ -38,7 +38,7 @@ impl UtpListener {
         //Ok(_self)
 
         let socket = _self.socket.try_clone()?;
-        let buffers = _self.buffers.clone();
+        let channels = _self.channels.clone();
 
         //let sender = tx.clone();
 
@@ -55,15 +55,18 @@ impl UtpListener {
                 match packet.header._type {
                     UtpType::Data => {
 
+                        println!("DATA");
                         let conn_id = packet.header.conn_id;
 
-                        if !buffers.lock().unwrap().contains_key(&conn_id) {
+                        if !channels.lock().unwrap().contains_key(&conn_id) {
+                            println!("SKIP");
                             continue;
                         }
+                        println!("DATA2");
 
-                        buffers.lock().unwrap().get_mut(&conn_id).unwrap().get_mut().push(packet);
+                        channels.lock().unwrap().get_mut(&conn_id).unwrap().send(packet).unwrap();
 
-                        println!("DATA");
+                        println!("DATA3");
 
 
                         //self.streams.get()
@@ -275,9 +278,8 @@ impl Iterator for Incoming<'_> {
 
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
-                println!("PACKET RECEIVED");
-
                 self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, None).to_bytes().as_slice(), src_addr).unwrap();
+                let (tx, rx) = channel();
 
                 let socket = UtpSocket {
                     socket: self.listener.socket.try_clone().unwrap(),
@@ -286,10 +288,11 @@ impl Iterator for Incoming<'_> {
                     send_conn_id: packet.header.conn_id,
                     seq_nr: 1,
                     ack_nr: 0,
-                    incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
+                    receiver: Some(rx)
+                    //incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
                 };
 
-                self.listener.buffers.lock().unwrap().insert(packet.header.conn_id, Rc::clone(&socket.incoming_packets));
+                self.listener.channels.lock().unwrap().insert(packet.header.conn_id+1, tx);
 
                 Some(Ok(socket))
             }

@@ -5,6 +5,7 @@ use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Receiver;
 use std::time::Duration;
 use crate::utils::random;
 use crate::utp::utp_listener::UtpListener;
@@ -38,7 +39,8 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16,
-    pub(crate) incoming_packets: Rc<RefCell<Vec<UtpPacket>>>
+    pub(crate) receiver: Option<Receiver<UtpPacket>>
+    //pub(crate) incoming_packets: Rc<RefCell<Vec<UtpPacket>>>
 }
 
 impl UtpSocket {
@@ -52,7 +54,8 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_packets: Rc::new(RefCell::new(Vec::new()))
+            receiver: None
+            //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
     }
 
@@ -65,7 +68,8 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_packets: Rc::new(RefCell::new(Vec::new()))
+            receiver: None
+            //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
     }
 
@@ -82,6 +86,14 @@ impl UtpSocket {
     }
 
     pub fn recv(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match &self.receiver {
+            Some(receiver) => {
+                println!("RECEIVE");
+            }
+            None => {
+
+            }
+        }
         /*
         match self.listener.as_ref() {
             Some(listener) => {
