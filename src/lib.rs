@@ -67,6 +67,8 @@ mod tests {
             match socket {
                 Ok(socket) => {
                     println!("NEW SOCKET");
+                    let mut buf = [0; 1500];
+                    socket.recv(&mut buf);
                 },
                 Err(e) => {
                     //println!("{}", e);

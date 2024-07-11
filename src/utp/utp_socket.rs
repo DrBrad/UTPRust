@@ -85,15 +85,21 @@ impl UtpSocket {
         todo!()
     }
 
-    pub fn recv(&mut self, buf: &[u8]) -> io::Result<usize> {
-        match &self.receiver {
+    pub fn recv(&self, buf: &[u8]) -> io::Result<usize> {
+        let packet = match &self.receiver {
             Some(receiver) => {
-                println!("RECEIVE");
+                receiver.recv()?
             }
             None => {
-
+                let mut buf = [0; 1500];
+                let size = self.socket.recv(&mut buf)?;
+                UtpPacket::from_bytes(&mut buf[..size])
             }
-        }
+        };
+
+        println!("RECEIVED");
+
+        todo!()
         /*
         match self.listener.as_ref() {
             Some(listener) => {
@@ -113,7 +119,6 @@ impl UtpSocket {
         }
         */
 
-        todo!()
 
         //let mut buf = [0; HEADER_SIZE+BUF_SIZE];
     }
