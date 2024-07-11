@@ -15,7 +15,7 @@ pub struct Incoming<'a> {
 
 pub struct UtpListener {
     pub socket: UdpSocket,
-    incoming_buffer: Arc<Mutex<HashMap<u16, Vec<UtpPacket>>>>
+    incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
 }
 
 impl UtpListener {
@@ -26,7 +26,7 @@ impl UtpListener {
 
         let _self = Self {
             socket,
-            incoming_buffer: Arc::new(Mutex::new(HashMap::new()))
+            incoming_buffer: HashMap::new()
         };
 
         /*
@@ -112,10 +112,21 @@ impl UtpListener {
         }
     }
 
-    fn recv(&self) {
+    fn recv(&mut self) {
         let mut buf = [0; 1500]; //CHANGE / CORRECT
         let (size, src_addr) = self.socket.recv_from(&mut buf).unwrap();
+        let packet = UtpPacket::from_bytes(&buf[..size]);
+
+        if self.incoming_buffer.contains_key(&packet.header.connection_id) {
+            self.incoming_buffer.get_mut(&packet.header.connection_id).unwrap().lock().unwrap().push(packet);
+            return;
+        }
+
         //self.incoming_buffer.lock().unwrap().insert(src_addr, Vec::new());
+        let conn_id = packet.header.connection_id.clone();
+        let mut packets = Vec::new();
+        packets.push(packet);
+        self.incoming_buffer.insert(conn_id, Arc::new(Mutex::new(packets)));
     }
 
     /*
