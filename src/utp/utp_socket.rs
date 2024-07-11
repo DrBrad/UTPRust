@@ -112,32 +112,6 @@ impl UtpSocket {
             }
             None => Err(io::Error::new(io::ErrorKind::Other, "No data"))
         }
-
-        // Remove the copied bytes from the Vec<u8>
-        //drain(..len);
-
-
-        /*
-        match self.listener.as_ref() {
-            Some(listener) => {
-                listener.recv();
-            }
-            None => {
-
-            }
-        }*/
-
-        //let packet = self.incoming_packets.get(0)?;
-        //self.incoming_packets.remove(0);
-        /*
-        match packet.payload {
-            Some(payload) => buf.payload
-            None => self.recv(buf)
-        }
-        */
-
-
-        //let mut buf = [0; HEADER_SIZE+BUF_SIZE];
     }
 
     pub fn recv_from(&mut self, buf: &mut [u8]) -> io::Result<(usize, SocketAddr)> {

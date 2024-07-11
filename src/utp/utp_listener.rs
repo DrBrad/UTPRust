@@ -286,6 +286,12 @@ impl Iterator for Incoming<'_> {
                     //incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
                 };
 
+                println!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                         packet.header._type,
+                         packet.header.conn_id,
+                         packet.header.seq_nr,
+                         packet.header.ack_nr);
+
                 self.listener.channels.lock().unwrap().insert(packet.header.conn_id+1, tx);
 
                 Some(Ok(socket))
