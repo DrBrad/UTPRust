@@ -29,20 +29,37 @@ const PRE_SEND_TIMEOUT: u32 = 500_000;
 //const MAX_BASE_DELAY_AGE: Delay = Delay(60_000_000);
 
 pub struct UtpSocket {
-    pub(crate) socket: UdpSocket
+    pub(crate) socket: UdpSocket,
+    pub(crate) remote_addr: Option<SocketAddr>,
+    pub(crate) recv_conn_id: u16,
+    pub(crate) send_conn_id: u16,
+    pub(crate) seq_nr: u16,
+    pub(crate) ack_nr: u16,
 }
 
 impl UtpSocket {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+        let conn_id = random::gen();
         UdpSocket::bind(addr).map(|socket| Self {
-            socket
+            socket,
+            remote_addr: None,
+            recv_conn_id: conn_id+1,
+            send_conn_id: conn_id,
+            seq_nr: 1,
+            ack_nr: 0
         })
     }
 
     pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+        let conn_id = random::gen();
         UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
-            socket
+            socket,
+            remote_addr: None,
+            recv_conn_id: conn_id+1,
+            send_conn_id: conn_id,
+            seq_nr: 1,
+            ack_nr: 0
         })
 
         /*

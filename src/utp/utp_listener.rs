@@ -211,8 +211,15 @@ impl<'a> Iterator for Incoming<'a> {
             Ok((packet, src_addr)) => {
                 println!("PACKET RECEIVED");
 
+                self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, None).to_bytes().as_slice(), src_addr).unwrap();
+
                 Some(Ok(UtpSocket {
-                    socket: self.listener.socket.try_clone().unwrap()
+                    socket: self.listener.socket.try_clone().unwrap(),
+                    remote_addr: Some(src_addr),
+                    recv_conn_id: packet.header.conn_id+1,
+                    send_conn_id: packet.header.conn_id,
+                    seq_nr: 1,
+                    ack_nr: 0
                 }))
             }
             Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
