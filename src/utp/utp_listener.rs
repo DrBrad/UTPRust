@@ -15,7 +15,7 @@ pub struct Incoming<'a> {
 
 pub struct UtpListener {
     pub socket: UdpSocket,
-    streams: HashMap<u16, UtpSocket>,
+    sockets: Arc<Mutex<HashMap<u16, UtpSocket>>>,
     receiver: Receiver<(UtpPacket, SocketAddr)>
     //incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
 }
@@ -29,7 +29,7 @@ impl UtpListener {
 
         let _self = Self {
             socket: UdpSocket::bind(addr)?,
-            streams: HashMap::new(),
+            sockets: Arc::new(Mutex::new(HashMap::new())),
             receiver: rx
             //new_connections: HashMap::new()
             //incoming_buffer: HashMap::new()
@@ -52,6 +52,8 @@ impl UtpListener {
                 match packet.header._type {
                     UtpType::Data => {
                         println!("DATA");
+
+                        //self.streams.get()
                     },
                     UtpType::Fin => {
                         println!("FIN");
@@ -153,7 +155,7 @@ impl UtpListener {
         let packet = UtpPacket::from_bytes(&buf[..size]);
 
         let conn_id = packet.header.conn_id.clone();
-        if !self.streams.contains_key(&conn_id) {
+        if !self.sockets.contains_key(&conn_id) {
             println!("NEW STREAM");
             //self.streams.insert(conn_id, packet);
         }
@@ -213,14 +215,17 @@ impl<'a> Iterator for Incoming<'a> {
 
                 self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, None).to_bytes().as_slice(), src_addr).unwrap();
 
-                Some(Ok(UtpSocket {
+                let socket = UtpSocket {
                     socket: self.listener.socket.try_clone().unwrap(),
                     remote_addr: Some(src_addr),
                     recv_conn_id: packet.header.conn_id+1,
                     send_conn_id: packet.header.conn_id,
                     seq_nr: 1,
-                    ack_nr: 0
-                }))
+                    ack_nr: 0,
+                    incoming_buffer: Vec::new(),
+                };
+
+                Some(Ok(socket))
             }
             Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
         }
