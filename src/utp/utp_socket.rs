@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io;
-use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -88,7 +87,7 @@ impl UtpSocket {
     pub fn recv(&self, buf: &[u8]) -> io::Result<usize> {
         let packet = match &self.receiver {
             Some(receiver) => {
-                receiver.recv()?
+                receiver.recv().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?
             }
             None => {
                 let mut buf = [0; 1500];
