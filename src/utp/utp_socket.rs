@@ -123,7 +123,17 @@ impl UtpSocket {
     }
 
     pub fn close(&mut self) -> io::Result<()> {
-        self.socket.send_to(UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+        self.seq_nr += 1;
+        self.ack_nr += 1;
+        let packet = UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, None);
+
+        println!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                 packet.header._type,
+                 packet.header.conn_id,
+                 packet.header.seq_nr,
+                 packet.header.ack_nr);
+
+        self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
         Ok(())
     }
 }

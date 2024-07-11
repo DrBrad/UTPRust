@@ -74,6 +74,10 @@ mod tests {
 
                     socket.close().unwrap();
 
+                    let mut buf = [0; 1500];
+                    let n = socket.recv(&mut buf).unwrap();
+                    println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
+
                 },
                 Err(e) => {
                     //println!("{}", e);
