@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utp::utp_type::UtpType;
 
@@ -33,13 +34,14 @@ pub struct UtpHeader {
 #[derive(Debug)]
 pub struct UtpPacket {
     pub(crate) header: UtpHeader,
+    pub(crate) src_addr: SocketAddr,
     pub(crate) payload: Option<Vec<u8>>
 }
 
 
 impl UtpPacket {
 
-    pub fn new(_type: UtpType, conn_id: u16, seq_nr: u16, ack_nr: u16, payload: Option<Vec<u8>>) -> Self {
+    pub fn new(_type: UtpType, conn_id: u16, seq_nr: u16, ack_nr: u16, src_addr: SocketAddr, payload: Option<Vec<u8>>) -> Self {
         Self {
             header: UtpHeader {
                 _type,
@@ -52,6 +54,7 @@ impl UtpPacket {
                 seq_nr,
                 ack_nr
             },
+            src_addr,
             payload
         }
     }
@@ -81,7 +84,7 @@ impl UtpPacket {
         bytes
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Self {
+    pub fn from_bytes(src_addr: SocketAddr, bytes: &[u8]) -> Self {
         let header = UtpHeader {
             _type: UtpType::from_value(&(bytes[0] >> 4)).expect("Failed to find packet type"),
             version: bytes[0] & 0x0F,
@@ -96,6 +99,7 @@ impl UtpPacket {
 
         Self {
             header,
+            src_addr,
             payload: Some(bytes[HEADER_SIZE..].to_vec())
         }
     }

@@ -5,6 +5,7 @@ use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use crate::utils::random;
+use crate::utp::utp_listener::UtpListener;
 use crate::utp::utp_packet::{HEADER_SIZE, UtpPacket};
 
 const BUF_SIZE: usize = 1500;
@@ -64,23 +65,6 @@ impl UtpSocket {
             ack_nr: 0,
             incoming_packets: Vec::new()
         })
-
-        /*
-        let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)))?;
-        let remote_addr = addr.to_socket_addrs()?.next().unwrap();
-
-        let conn_id = random::gen();
-
-        Ok(Self {
-            socket,
-            remote_addr,
-            recv_conn_id: conn_id,
-            send_conn_id: conn_id+1,
-            seq_nr: 1,
-            ack_nr: 0,
-            //buffer: Vec::new()//Arc::new(Mutex::new(Vec::new()))
-        })
-        */
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
@@ -96,9 +80,26 @@ impl UtpSocket {
     }
 
     pub fn recv(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let packet = self.incoming_packets.get(0)?;
-        self.incoming_packets.remove(0);
-        packet.payload
+        /*
+        match self.listener.as_ref() {
+            Some(listener) => {
+                listener.recv();
+            }
+            None => {
+
+            }
+        }*/
+
+        //let packet = self.incoming_packets.get(0)?;
+        //self.incoming_packets.remove(0);
+        /*
+        match packet.payload {
+            Some(payload) => buf.payload
+            None => self.recv(buf)
+        }
+        */
+
+        todo!()
 
         //let mut buf = [0; HEADER_SIZE+BUF_SIZE];
     }

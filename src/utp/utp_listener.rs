@@ -9,36 +9,37 @@ use crate::utp::utp_socket::UtpSocket;
 use crate::utp::utp_stream::UtpStream;
 use crate::utp::utp_type::UtpType;
 
-pub struct Incoming<'a> {
-    listener: &'a UtpListener,
-}
-
 pub struct UtpListener {
     pub socket: UdpSocket,
-    sockets: Arc<Mutex<HashMap<u16, UtpSocket>>>,
-    receiver: Receiver<(UtpPacket, SocketAddr)>
+    sockets: HashMap<u16, UtpSocket>,
+    syn_queue: Vec<UtpPacket>
+    //receiver: Receiver<(UtpPacket, SocketAddr)>
     //incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        //let socket = ;
-        //socket.set_nonblocking(true)?;
-        let (tx, rx) = channel();
+        let socket = UdpSocket::bind(addr)?;
+        socket.set_nonblocking(true)?;
+        //let (tx, rx) = channel();
 
         let _self = Self {
-            socket: UdpSocket::bind(addr)?,
-            sockets: Arc::new(Mutex::new(HashMap::new())),
-            receiver: rx
+            socket,//: UdpSocket::bind(addr)?,
+            sockets: HashMap::new(),
+            syn_queue: Vec::new()
+            //receiver: rx
             //new_connections: HashMap::new()
             //incoming_buffer: HashMap::new()
         };
 
-        let socket = _self.socket.try_clone()?;
+        Ok(_self)
+
+        //let socket = _self.socket.try_clone()?;
 
         //let sender = tx.clone();
 
+        /*
         thread::spawn(move || {
             let mut buf = [0u8; 65535];
 
@@ -71,8 +72,9 @@ impl UtpListener {
                 }
             }
         });
+        */
 
-        Ok(_self)
+        //Ok(_self)
         /*
         UdpSocket::bind(addr).map(|socket| Self {
             socket
@@ -143,22 +145,65 @@ impl UtpListener {
         self.socket.local_addr()
     }
 
-    pub fn incoming(&self) -> Incoming<'_> {
+    pub fn incoming(&mut self) -> Incoming<'_> {
         Incoming {
             listener: self
         }
     }
 
-    fn recv(&mut self) {
-        let mut buf = [0; 1500]; //CHANGE / CORRECT
-        let (size, src_addr) = self.socket.recv_from(&mut buf).unwrap();
-        let packet = UtpPacket::from_bytes(&buf[..size]);
+    fn accept(&mut self) -> io::Result<UtpPacket> {
+        while self.syn_queue.is_empty() {
+            self.recv();
+        }
 
+        let packet = self.syn_queue.remove(0);
+        Ok(packet)
+    }
+
+    pub fn recv(&mut self) {
+        let mut buf = [0; 1500]; //CHANGE / CORRECT
+        match self.socket.recv_from(&mut buf) {
+            Ok((size, src_addr)) => {
+                let packet = UtpPacket::from_bytes(src_addr, &buf[..size]);
+
+                let conn_id = packet.header.conn_id.clone();
+
+                match packet.header._type {
+                    UtpType::Data => {
+                        println!("DATA");
+                    }
+                    UtpType::Fin => {}
+                    UtpType::State => {}
+                    UtpType::Reset => {}
+                    UtpType::Syn => {
+                        for packet in &self.syn_queue {
+                            if packet.header.conn_id == conn_id {
+                                return;
+                            }
+                        }
+
+                        self.syn_queue.push(packet);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        /*
+        if self.sockets.contains_key(&conn_id) {
+            self.sockets.get_mut(&conn_id).unwrap().incoming_packets.push(packet);
+            return;
+        }
+        */
+
+
+        /*
         let conn_id = packet.header.conn_id.clone();
         if !self.sockets.contains_key(&conn_id) {
             println!("NEW STREAM");
             //self.streams.insert(conn_id, packet);
         }
+        */
 
         /*
         if self.incoming_buffer.contains_key(&packet.header.connection_id) {
@@ -196,7 +241,11 @@ impl UtpListener {
     */
 }
 
-impl<'a> Iterator for Incoming<'a> {
+pub struct Incoming<'a> {
+    listener: &'a mut UtpListener,
+}
+
+impl Iterator for Incoming<'_> {
 
     type Item = io::Result<UtpSocket>;
 
@@ -209,6 +258,26 @@ impl<'a> Iterator for Incoming<'a> {
         }
         */
 
+        match self.listener.accept() {
+            Ok(packet) => {
+                self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, packet.src_addr, None).to_bytes().as_slice(), packet.src_addr).unwrap();
+
+                let socket = UtpSocket {
+                    socket: self.listener.socket.try_clone().unwrap(),
+                    remote_addr: Some(packet.src_addr),
+                    recv_conn_id: packet.header.conn_id+1,
+                    send_conn_id: packet.header.conn_id,
+                    seq_nr: 1,
+                    ack_nr: 0,
+                    incoming_packets: Vec::new(),
+                };
+
+                Some(Ok(socket))
+            }
+            Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
+        }
+
+        /*
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
                 println!("PACKET RECEIVED");
@@ -229,6 +298,7 @@ impl<'a> Iterator for Incoming<'a> {
             }
             Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
         }
+        */
 
 
 
