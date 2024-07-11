@@ -1,7 +1,9 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io;
 use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use crate::utils::random;
@@ -36,7 +38,7 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16,
-    pub(crate) incoming_packets: Arc<Mutex<Vec<UtpPacket>>>
+    pub(crate) incoming_packets: Rc<RefCell<Vec<UtpPacket>>>
 }
 
 impl UtpSocket {
@@ -50,7 +52,7 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_packets: Arc::new(Mutex::new(Vec::new()))
+            incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
     }
 
@@ -63,7 +65,7 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_packets: Vec::new()
+            incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
     }
 
