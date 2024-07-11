@@ -69,7 +69,7 @@ mod tests {
                     println!("NEW SOCKET");
                 },
                 Err(e) => {
-                    println!("{}", e);
+                    //println!("{}", e);
                 }
             }
         }

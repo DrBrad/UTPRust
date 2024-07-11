@@ -11,9 +11,9 @@ use crate::utp::utp_type::UtpType;
 
 pub struct UtpListener {
     pub socket: UdpSocket,
-    sockets: HashMap<u16, UtpSocket>,
-    syn_queue: Vec<UtpPacket>
-    //receiver: Receiver<(UtpPacket, SocketAddr)>
+    buffers: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>,
+    //syn_queue: Vec<UtpPacket>
+    receiver: Receiver<(UtpPacket, SocketAddr)>
     //incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
 }
 
@@ -21,25 +21,24 @@ impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         let socket = UdpSocket::bind(addr)?;
-        socket.set_nonblocking(true)?;
-        //let (tx, rx) = channel();
+        //socket.set_nonblocking(true)?;
+        let (tx, rx) = channel();
 
         let _self = Self {
             socket,//: UdpSocket::bind(addr)?,
-            sockets: HashMap::new(),
-            syn_queue: Vec::new()
-            //receiver: rx
+            buffers: HashMap::new(),
+            //syn_queue: Vec::new()
+            receiver: rx
             //new_connections: HashMap::new()
             //incoming_buffer: HashMap::new()
         };
 
-        Ok(_self)
+        //Ok(_self)
 
-        //let socket = _self.socket.try_clone()?;
+        let socket = _self.socket.try_clone()?;
 
         //let sender = tx.clone();
 
-        /*
         thread::spawn(move || {
             let mut buf = [0u8; 65535];
 
@@ -53,6 +52,8 @@ impl UtpListener {
                 match packet.header._type {
                     UtpType::Data => {
                         println!("DATA");
+
+
 
                         //self.streams.get()
                     },
@@ -72,8 +73,8 @@ impl UtpListener {
                 }
             }
         });
-        */
 
+        Ok(_self)
         //Ok(_self)
         /*
         UdpSocket::bind(addr).map(|socket| Self {
@@ -151,6 +152,7 @@ impl UtpListener {
         }
     }
 
+    /*
     fn accept(&mut self) -> io::Result<UtpPacket> {
         while self.syn_queue.is_empty() {
             self.recv();
@@ -217,7 +219,7 @@ impl UtpListener {
         packets.push(packet);
         self.incoming_buffer.insert(conn_id, Arc::new(Mutex::new(packets)));
         */
-    }
+    }*/
 
     /*
     pub fn send(socket: &UdpSocket, src_addr: SocketAddr, _type: UtpType, connection_id: u16, seq_nr: u16, ack_nr: u16, payload: Vec<u8>) {
@@ -258,6 +260,33 @@ impl Iterator for Incoming<'_> {
         }
         */
 
+
+
+        match self.listener.receiver.recv() {
+            Ok((packet, src_addr)) => {
+                println!("PACKET RECEIVED");
+
+                self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, None).to_bytes().as_slice(), src_addr).unwrap();
+
+                let socket = UtpSocket {
+                    socket: self.listener.socket.try_clone().unwrap(),
+                    remote_addr: Some(src_addr),
+                    recv_conn_id: packet.header.conn_id+1,
+                    send_conn_id: packet.header.conn_id,
+                    seq_nr: 1,
+                    ack_nr: 0,
+                    incoming_packets: Arc::new(Mutex::new(Vec::new()))
+                };
+
+                self.listener.buffers.insert(packet.header.conn_id, socket.incoming_packets.clone());
+
+                Some(Ok(socket))
+            }
+            Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
+        }
+
+
+        /*
         match self.listener.accept() {
             Ok(packet) => {
                 self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, packet.src_addr, None).to_bytes().as_slice(), packet.src_addr).unwrap();
@@ -275,33 +304,7 @@ impl Iterator for Incoming<'_> {
                 Some(Ok(socket))
             }
             Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
-        }
-
-        /*
-        match self.listener.receiver.recv() {
-            Ok((packet, src_addr)) => {
-                println!("PACKET RECEIVED");
-
-                self.listener.socket.send_to(UtpPacket::new(UtpType::State, packet.header.conn_id, 1, packet.header.seq_nr+1, None).to_bytes().as_slice(), src_addr).unwrap();
-
-                let socket = UtpSocket {
-                    socket: self.listener.socket.try_clone().unwrap(),
-                    remote_addr: Some(src_addr),
-                    recv_conn_id: packet.header.conn_id+1,
-                    send_conn_id: packet.header.conn_id,
-                    seq_nr: 1,
-                    ack_nr: 0,
-                    incoming_packets: Vec::new(),
-                };
-
-                Some(Ok(socket))
-            }
-            Err(e) => Some(Err(io::Error::new(io::ErrorKind::Other, e)))
-        }
-        */
-
-
-
+        }*/
     }
 }
         /*

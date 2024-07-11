@@ -36,7 +36,7 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16,
-    pub(crate) incoming_packets: Vec<UtpPacket>
+    pub(crate) incoming_packets: Arc<Mutex<Vec<UtpPacket>>>
 }
 
 impl UtpSocket {
@@ -50,7 +50,7 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_packets: Vec::new()
+            incoming_packets: Arc::new(Mutex::new(Vec::new()))
         })
     }
 
