@@ -1,9 +1,11 @@
+use std::collections::HashMap;
 use std::io;
 use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use crate::utils::random;
-use crate::utp::utp_packet::HEADER_SIZE;
+use crate::utp::utp_packet::{HEADER_SIZE, UtpPacket};
 
 const BUF_SIZE: usize = 1500;
 const GAIN: f64 = 1.0;

@@ -5,7 +5,7 @@ use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, RecvError, TryRecvError};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::utp::utp_packet::{UtpHeader, UtpPacket};
+use crate::utp::utp_packet::{HEADER_SIZE, UtpHeader, UtpPacket};
 use crate::utp::utp_stream::UtpStream;
 use crate::utp::utp_type::UtpType;
 
@@ -14,17 +14,28 @@ pub struct Incoming<'a> {
 }
 
 pub struct UtpListener {
-    pub socket: UdpSocket
+    pub socket: UdpSocket,
+    incoming_buffer: Arc<Mutex<HashMap<u16, Vec<UtpPacket>>>>
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         let socket = UdpSocket::bind(addr)?;
-        socket.set_nonblocking(true);
-        Ok(Self {
-            socket
-        })
+        socket.set_nonblocking(true)?;
+
+        let _self = Self {
+            socket,
+            incoming_buffer: Arc::new(Mutex::new(HashMap::new()))
+        };
+
+        /*
+        thread::spawn(move || {
+
+        });
+        */
+
+        Ok(_self)
         /*
         UdpSocket::bind(addr).map(|socket| Self {
             socket
@@ -99,6 +110,12 @@ impl UtpListener {
         Incoming {
             listener: self
         }
+    }
+
+    fn recv(&self) {
+        let mut buf = [0; 1500]; //CHANGE / CORRECT
+        let (size, src_addr) = self.socket.recv_from(&mut buf).unwrap();
+        //self.incoming_buffer.lock().unwrap().insert(src_addr, Vec::new());
     }
 
     /*
