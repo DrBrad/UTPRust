@@ -35,7 +35,7 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16,
-    pub(crate) incoming_buffer: Vec<UtpPacket>
+    pub(crate) incoming_packets: Vec<UtpPacket>
 }
 
 impl UtpSocket {
@@ -49,20 +49,20 @@ impl UtpSocket {
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_buffer: Vec::new()
+            incoming_packets: Vec::new()
         })
     }
 
     pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         let conn_id = random::gen();
-        UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
+        UdpSocket::bind(addr).map(|socket| Self {
             socket,
             remote_addr: None,
             recv_conn_id: conn_id+1,
             send_conn_id: conn_id,
             seq_nr: 1,
             ack_nr: 0,
-            incoming_buffer: Vec::new()
+            incoming_packets: Vec::new()
         })
 
         /*
@@ -95,9 +95,12 @@ impl UtpSocket {
         todo!()
     }
 
-    pub fn recv(&self) {
-        let mut buf = [0; HEADER_SIZE+BUF_SIZE];
-        todo!()
+    pub fn recv(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let packet = self.incoming_packets.get(0)?;
+        self.incoming_packets.remove(0);
+        packet.payload
+
+        //let mut buf = [0; HEADER_SIZE+BUF_SIZE];
     }
 
     pub fn recv_from(&mut self, buf: &mut [u8]) -> io::Result<(usize, SocketAddr)> {

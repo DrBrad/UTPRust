@@ -222,7 +222,7 @@ impl<'a> Iterator for Incoming<'a> {
                     send_conn_id: packet.header.conn_id,
                     seq_nr: 1,
                     ack_nr: 0,
-                    incoming_buffer: Vec::new(),
+                    incoming_packets: Vec::new(),
                 };
 
                 Some(Ok(socket))
