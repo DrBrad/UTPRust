@@ -22,7 +22,7 @@ pub struct UtpHeader {
     pub(crate) _type: UtpType,
     pub(crate) version: u8,
     pub(crate) extension: u8,
-    pub(crate) connection_id: u16,
+    pub(crate) conn_id: u16,
     pub(crate) timestamp: u32,
     pub(crate) timestamp_diff: u32,
     pub(crate) wnd_size: u32,
@@ -45,7 +45,7 @@ impl UtpPacket {
                 _type,
                 version: 1,
                 extension: 0,
-                connection_id: conn_id,
+                conn_id,
                 timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
                 timestamp_diff: 0,
                 wnd_size: 0,
@@ -71,7 +71,7 @@ impl UtpPacket {
         //let mut bytes = vec![0u8; HEADER_SIZE + self.payload.as_ref().unwrap().len()];
         bytes[0] = (self.header._type.value() << 4) | (self.header.version & 0x0F);
         bytes[1] = self.header.extension;
-        bytes[2..4].copy_from_slice(&self.header.connection_id.to_be_bytes());
+        bytes[2..4].copy_from_slice(&self.header.conn_id.to_be_bytes());
         bytes[4..8].copy_from_slice(&self.header.timestamp.to_be_bytes());
         bytes[8..12].copy_from_slice(&self.header.timestamp_diff.to_be_bytes());
         bytes[12..16].copy_from_slice(&self.header.wnd_size.to_be_bytes());
@@ -86,7 +86,7 @@ impl UtpPacket {
             _type: UtpType::from_value(&(bytes[0] >> 4)).expect("Failed to find packet type"),
             version: bytes[0] & 0x0F,
             extension: bytes[1],
-            connection_id: u16::from_be_bytes([bytes[2], bytes[3]]),
+            conn_id: u16::from_be_bytes([bytes[2], bytes[3]]),
             timestamp: u32::from_be_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]),
             timestamp_diff: u32::from_be_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]),
             wnd_size: u32::from_be_bytes([bytes[12], bytes[13], bytes[14], bytes[15]]),

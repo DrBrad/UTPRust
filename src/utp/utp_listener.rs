@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, RecvError, TryRecvError};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utp::utp_packet::{HEADER_SIZE, UtpHeader, UtpPacket};
+use crate::utp::utp_socket::UtpSocket;
 use crate::utp::utp_stream::UtpStream;
 use crate::utp::utp_type::UtpType;
 
@@ -15,18 +16,21 @@ pub struct Incoming<'a> {
 
 pub struct UtpListener {
     pub socket: UdpSocket,
-    incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
+    streams: HashMap<u16, UtpSocket>
+    //incoming_buffer: HashMap<u16, Arc<Mutex<Vec<UtpPacket>>>>
 }
 
 impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         let socket = UdpSocket::bind(addr)?;
-        socket.set_nonblocking(true)?;
+        //socket.set_nonblocking(true)?;
 
         let _self = Self {
             socket,
-            incoming_buffer: HashMap::new()
+            streams: HashMap::new(),
+            //new_connections: HashMap::new()
+            //incoming_buffer: HashMap::new()
         };
 
         /*
@@ -117,6 +121,13 @@ impl UtpListener {
         let (size, src_addr) = self.socket.recv_from(&mut buf).unwrap();
         let packet = UtpPacket::from_bytes(&buf[..size]);
 
+        let conn_id = packet.header.conn_id.clone();
+        if !self.streams.contains_key(&conn_id) {
+            println!("NEW STREAM");
+            //self.streams.insert(conn_id, packet);
+        }
+
+        /*
         if self.incoming_buffer.contains_key(&packet.header.connection_id) {
             self.incoming_buffer.get_mut(&packet.header.connection_id).unwrap().lock().unwrap().push(packet);
             return;
@@ -127,6 +138,7 @@ impl UtpListener {
         let mut packets = Vec::new();
         packets.push(packet);
         self.incoming_buffer.insert(conn_id, Arc::new(Mutex::new(packets)));
+        */
     }
 
     /*
@@ -153,9 +165,18 @@ impl UtpListener {
 
 impl<'a> Iterator for Incoming<'a> {
 
-type Item = io::Result<UtpStream>;
+    type Item = io::Result<UtpStream>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        self.listener.recv();
+
+        /*
+        for (conn_id, packets) in &self.listener.incoming_buffer {
+            if self.listener.
+        }
+        */
+
+
         todo!()
     }
 }
