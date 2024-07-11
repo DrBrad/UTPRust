@@ -35,6 +35,7 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16,
+    pub(crate) incoming_buffer: Vec<UtpPacket>
 }
 
 impl UtpSocket {
@@ -47,7 +48,8 @@ impl UtpSocket {
             recv_conn_id: conn_id+1,
             send_conn_id: conn_id,
             seq_nr: 1,
-            ack_nr: 0
+            ack_nr: 0,
+            incoming_buffer: Vec::new()
         })
     }
 
@@ -59,7 +61,8 @@ impl UtpSocket {
             recv_conn_id: conn_id+1,
             send_conn_id: conn_id,
             seq_nr: 1,
-            ack_nr: 0
+            ack_nr: 0,
+            incoming_buffer: Vec::new()
         })
 
         /*
