@@ -42,7 +42,6 @@ pub struct UtpSocket {
     pub(crate) ack_nr: u16,
     pub(crate) receiver: Option<Receiver<UtpPacket>>,
     //pub(crate) buffer: Vec<u8>
-    //pub(crate) incoming_packets: Rc<RefCell<Vec<UtpPacket>>>
 }
 
 impl UtpSocket {
