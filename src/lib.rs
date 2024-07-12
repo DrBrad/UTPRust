@@ -67,12 +67,13 @@ mod tests {
             match socket {
                 Ok(mut socket) => {
                     println!("NEW SOCKET");
-                    let mut buf = [0; 1500];
-                    let n = socket.recv(&mut buf).unwrap();
+                    //let mut buf = [0; 1500];
+                    //let n = socket.recv(&mut buf).unwrap();
+                    //println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
 
-                    println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
+                    socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
-                    socket.close().unwrap();
+                    //socket.close().unwrap();
 
                 },
                 Err(e) => {
