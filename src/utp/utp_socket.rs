@@ -108,8 +108,34 @@ impl UtpSocket {
             }
         };
 
+        /*
+        match packet.header._type {
+            UtpType::Data => {
+                self.seq_nr += 1;
+                self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.seq_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+            }
+            UtpType::Fin => {
+                //CLOSING
+            }
+            UtpType::Ack => {
+
+            }
+            UtpType::Reset => {
+                //????
+            }
+            UtpType::Syn => {
+                //NEW CONNECTION...
+            }
+        }
+        */
+
+        /*
+        if packet.header.seq_nr == self.ack_nr+1 {
+            self.ack_nr += 1;
+        }
+        */
+
         self.seq_nr += 1;
-        self.ack_nr += 1;
         self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.seq_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
 
         match packet.payload {

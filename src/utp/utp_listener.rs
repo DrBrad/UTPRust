@@ -59,7 +59,10 @@ impl UtpListener {
                          packet.header.ack_nr);
 
                 match packet.header._type {
-                    UtpType::Data => {
+                    UtpType::Syn => {
+                        tx.send((packet, src_addr)).unwrap();
+                    }
+                    _ => {
                         let conn_id = packet.header.conn_id;
 
                         if !channels.lock().unwrap().contains_key(&conn_id) {
@@ -67,18 +70,6 @@ impl UtpListener {
                         }
 
                         channels.lock().unwrap().get_mut(&conn_id).unwrap().send(packet);
-
-
-                        //self.streams.get()
-                    },
-                    UtpType::Fin => {
-                    },
-                    UtpType::Ack => {
-                    },
-                    UtpType::Reset => {
-                    },
-                    UtpType::Syn => {
-                        tx.send((packet, src_addr)).unwrap();
                     }
                 }
             }
