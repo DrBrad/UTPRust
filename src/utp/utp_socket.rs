@@ -39,8 +39,8 @@ pub struct UtpSocket {
     pub(crate) recv_conn_id: u16,
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
-    pub(crate) ack_nr: u16,
-    pub(crate) receiver: Option<Receiver<UtpPacket>>,
+    pub(crate) ack_nr: u16, //DO WE NEED CLIENT ACK AS WELL?
+    pub(crate) receiver: Option<Receiver<UtpPacket>>
     //pub(crate) buffer: Vec<u8>
 }
 
