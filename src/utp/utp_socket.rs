@@ -135,17 +135,33 @@ impl UtpSocket {
             self.ack_nr += 1;
         }
         */
+        /*
+        if self.ack_nr < packet.header.seq_nr {
+            println!("OUT OF ORDER...");
+        }
 
-        self.seq_nr += 1;
+        if self.ack_nr > packet.header.seq_nr {
+            println!("SAME SEQUENCE REPEAT");
+            let pack = UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.seq_nr+1, None);
+            self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+            //REPEAT IGNORE
+            return self.recv(buf);
+        }
+        */
+
         self.ack_nr += 1;
+        let pack = UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.ack_nr, None);
+        self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+
         //self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.seq_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-        self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.ack_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+        //let pack = UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.ack_nr, None);
+        //self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
 
         println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 packet.header._type,
-                 packet.header.conn_id,
-                 packet.header.seq_nr,
-                 packet.header.ack_nr);
+                 pack.header._type,
+                 pack.header.conn_id,
+                 pack.header.seq_nr,
+                 pack.header.ack_nr);
 
         match packet.payload {
             Some(data) => {

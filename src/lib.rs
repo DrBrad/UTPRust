@@ -78,6 +78,18 @@ mod tests {
 
                     println!("{}", String::from_utf8_lossy(&buf));
 
+
+                    let mut buf = [0; 1500];
+                    socket.recv(&mut buf);
+
+                    println!("{}", String::from_utf8_lossy(&buf));
+
+
+                    let mut buf = [0; 1500];
+                    socket.recv(&mut buf);
+
+                    println!("{}", String::from_utf8_lossy(&buf));
+
                     //socket.send("NUMBER 2".as_bytes()).unwrap();
 
 
