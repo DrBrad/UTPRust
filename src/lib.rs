@@ -73,6 +73,7 @@ mod tests {
 
                     socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
+                    socket.send("NUMBER 2".as_bytes()).unwrap();
                     //socket.close().unwrap();
 
                 },

@@ -52,7 +52,7 @@ impl UtpListener {
 
                 let packet = UtpPacket::from_bytes(&buf[..size]);
 
-                println!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                println!("RECEIVE [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                          packet.header._type,
                          packet.header.conn_id,
                          packet.header.seq_nr,
@@ -100,8 +100,8 @@ impl Iterator for Incoming<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
-                let send = UtpPacket::new(UtpType::Ack, packet.header.conn_id, 1, packet.header.seq_nr+1, None);
-                println!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                let send = UtpPacket::new(UtpType::Ack, packet.header.conn_id, 0, packet.header.seq_nr+1, None);
+                println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                          send.header._type,
                          send.header.conn_id,
                          send.header.seq_nr,
@@ -115,8 +115,8 @@ impl Iterator for Incoming<'_> {
                     remote_addr: Some(src_addr),
                     recv_conn_id: packet.header.conn_id+1,
                     send_conn_id: packet.header.conn_id,
-                    seq_nr: 1,
-                    ack_nr: 0,
+                    seq_nr: 0,
+                    ack_nr: packet.header.seq_nr+1,
                     receiver: Some(rx)
                     //incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
                 };
