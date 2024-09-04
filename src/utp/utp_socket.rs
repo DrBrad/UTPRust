@@ -136,8 +136,16 @@ impl UtpSocket {
         }
         */
 
+        self.seq_nr += 1;
         self.ack_nr += 1;
-        self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.ack_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+        //self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.seq_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+        self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.ack_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+
+        println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                 packet.header._type,
+                 packet.header.conn_id,
+                 packet.header.seq_nr,
+                 packet.header.ack_nr);
 
         match packet.payload {
             Some(data) => {
