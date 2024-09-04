@@ -71,9 +71,16 @@ mod tests {
                     //let n = socket.recv(&mut buf).unwrap();
                     //println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
 
-                    socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+                    //socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
-                    socket.send("NUMBER 2".as_bytes()).unwrap();
+                    let mut buf = [0; 1500];
+                    socket.recv(&mut buf);
+
+                    println!("{}", String::from_utf8_lossy(&buf));
+
+                    //socket.send("NUMBER 2".as_bytes()).unwrap();
+
+
                     //socket.close().unwrap();
 
                 },
