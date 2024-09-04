@@ -73,6 +73,9 @@ mod tests {
 
                     socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
+
+                    socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+
                     /*
                     let mut buf = [0; 1500];
                     socket.recv(&mut buf);
