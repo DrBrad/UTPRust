@@ -154,10 +154,6 @@ impl UtpSocket {
         let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, packet.header.seq_nr, None);
         self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
 
-        //self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.seq_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-        //let pack = UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.ack_nr, None);
-        //self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-
         println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                  pack.header._type,
                  pack.header.conn_id,
