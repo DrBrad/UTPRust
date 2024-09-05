@@ -151,7 +151,7 @@ impl UtpSocket {
         */
 
         //self.ack_nr += 1;
-        self.seq_nr += 1;
+        //self.seq_nr += 1;
         self.ack_nr = packet.header.seq_nr;
         let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, None);
         self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
