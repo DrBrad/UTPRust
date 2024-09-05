@@ -81,7 +81,6 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
-        //self.seq_nr += 1;
         self.seq_nr += 1;
         let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec()));
 

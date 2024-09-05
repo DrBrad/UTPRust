@@ -116,7 +116,9 @@ impl Iterator for Incoming<'_> {
                     recv_conn_id: packet.header.conn_id+1,
                     send_conn_id: packet.header.conn_id,
                     seq_nr: 1,
-                    ack_nr: packet.header.seq_nr,
+                    ack_nr: 1,
+                    //seq_nr: 1,
+                    //ack_nr: packet.header.seq_nr,
                     receiver: Some(rx)
                     //incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
                 };
