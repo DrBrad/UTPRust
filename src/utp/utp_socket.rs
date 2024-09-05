@@ -108,7 +108,7 @@ impl UtpSocket {
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         });
 
-        let send = UtpPacket::new(UtpType::Syn, conn_id, 1, 0, None);
+        let send = UtpPacket::new(UtpType::Syn, conn_id, 1, 0, 1500, None);
         println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                  send.header._type,
                  send.header.conn_id,
@@ -162,7 +162,7 @@ impl UtpSocket {
         };
 
         self.seq_nr += 1;
-        let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec()));
+        let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, Some(buf.to_vec()));
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
         /*
         self.last_packet_sent = Instant::now();
@@ -240,7 +240,7 @@ impl UtpSocket {
         match packet.header._type {
             UtpType::Data => {
                 //NEW CONNECTION...
-                let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, None);
+                let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
                 self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
 
                 println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
@@ -277,7 +277,7 @@ impl UtpSocket {
     }
 
     pub fn close(&mut self) -> io::Result<()> {
-        let packet = UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, None);
+        let packet = UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
 
         println!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                  packet.header._type,
