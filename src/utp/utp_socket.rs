@@ -40,18 +40,19 @@ pub struct UtpSocket {
     pub(crate) remote_addr: Option<SocketAddr>,
     pub(crate) recv_conn_id: u16,
     pub(crate) send_conn_id: u16,
-    pub(crate) last_ack_nr: u16,
+    //pub(crate) last_ack_nr: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16, //DO WE NEED CLIENT ACK AS WELL?
     pub(crate) receiver: Option<Receiver<UtpPacket>>,
     pub(crate) state: UtpState,
+    /*
     pub(crate) rtt: f64,
     pub(crate) rtt_var: f64,
     pub(crate) timeout: Duration,
     pub(crate) last_packet_sent: Instant,
     pub(crate) last_packet: Option<UtpPacket>,
     pub(crate) packet_rtt: Duration, // RTT for the last packet
-    pub(crate) max_window: usize
+    pub(crate) max_window: usize*/
     //pub(crate) buffer: Vec<u8>
 }
 
@@ -64,18 +65,19 @@ impl UtpSocket {
             remote_addr: None,
             recv_conn_id: conn_id,
             send_conn_id: conn_id+1,
-            last_ack_nr: 0,
+            //last_ack_nr: 0,
             seq_nr: 0,
             ack_nr: 0,
             receiver: None,
             state: Waiting,
+            /*
             rtt: 0.0,
             rtt_var: 0.0,
             timeout: Duration::from_millis(1000),
             last_packet_sent: Instant::now(),
             last_packet: None,
             packet_rtt: Duration::from_millis(1000),
-            max_window: 1500
+            max_window: 1500*/
             //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
@@ -89,18 +91,19 @@ impl UtpSocket {
             remote_addr: Some(addr),
             recv_conn_id: conn_id,
             send_conn_id: conn_id+1,
-            last_ack_nr: 0,
+            //last_ack_nr: 0,
             seq_nr: 1,
             ack_nr: 0,
             receiver: None,
             state: SynSent,
+            /*
             rtt: 0.0,
             rtt_var: 0.0,
             timeout: Duration::from_millis(1000),
             last_packet_sent: Instant::now(),
             last_packet: None,
             packet_rtt: Duration::from_millis(1000),
-            max_window: 1500
+            max_window: 1500*/
             //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         });
@@ -149,7 +152,7 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.check_timeout();
+        //self.check_timeout();
 
         match self.state {
             Connected => {},
@@ -159,6 +162,9 @@ impl UtpSocket {
         };
 
         self.seq_nr += 1;
+        let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec()));
+        self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
+        /*
         self.last_packet_sent = Instant::now();
         self.last_packet = Some(UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec())));
 
@@ -169,6 +175,7 @@ impl UtpSocket {
                  self.last_packet.as_ref().unwrap().header.ack_nr);
 
         self.socket.send_to(self.last_packet.as_ref().unwrap().to_bytes().as_slice(), self.remote_addr.unwrap())
+        */
     }
 
     pub fn send_to(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -176,7 +183,7 @@ impl UtpSocket {
     }
 
     pub fn recv(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.check_timeout();
+        //self.check_timeout();
 
         let packet = match &self.receiver {
             Some(receiver) => {
@@ -210,6 +217,7 @@ impl UtpSocket {
             }
         };
 
+        /*
         let now = Instant::now();
 
         // Check if this ACK is for a packet in the range (last_ack_nr, ack_nr]
@@ -226,6 +234,7 @@ impl UtpSocket {
         }
 
         self.last_ack_nr = packet.header.ack_nr;
+        */
         self.ack_nr = packet.header.seq_nr;
 
         match packet.header._type {
@@ -280,6 +289,7 @@ impl UtpSocket {
         Ok(())
     }
 
+    /*
     fn check_timeout(&mut self) {
         let elapsed = self.last_packet_sent.elapsed();
 
@@ -290,4 +300,5 @@ impl UtpSocket {
             self.socket.send_to(self.last_packet.as_ref().unwrap().to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
         }
     }
+    */
 }
