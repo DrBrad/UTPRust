@@ -81,6 +81,7 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
+        //self.seq_nr += 1;
         self.seq_nr += 1;
         let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec()));
 
@@ -149,9 +150,10 @@ impl UtpSocket {
         }
         */
 
-        self.ack_nr += 1;
+        //self.ack_nr += 1;
         self.seq_nr += 1;
-        let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, packet.header.seq_nr, None);
+        self.ack_nr = packet.header.seq_nr;
+        let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, None);
         self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
 
         println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",

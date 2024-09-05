@@ -82,12 +82,25 @@ mod tests {
                     println!("{}", String::from_utf8_lossy(&buf));
 
 
+
+                    //let mut buf = [0; 1500];
+                    //socket.recv(&mut buf);
+
+                    //println!("{}", String::from_utf8_lossy(&buf));
+
+
+
+
+                    //socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+
+                    //socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+
+
+
                     let mut buf = [0; 1500];
                     socket.recv(&mut buf);
 
                     println!("{}", String::from_utf8_lossy(&buf));
-
-
                     /*
                     let mut buf = [0; 1500];
                     socket.recv(&mut buf);
