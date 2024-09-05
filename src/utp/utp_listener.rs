@@ -100,7 +100,7 @@ impl Iterator for Incoming<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
-                let send = UtpPacket::new(UtpType::Ack, packet.header.conn_id, 1, packet.header.seq_nr, None);
+                let send = UtpPacket::new(UtpType::Ack, packet.header.conn_id, 0, packet.header.seq_nr, None);
                 println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                          send.header._type,
                          send.header.conn_id,
@@ -115,7 +115,7 @@ impl Iterator for Incoming<'_> {
                     remote_addr: Some(src_addr),
                     recv_conn_id: packet.header.conn_id+1,
                     send_conn_id: packet.header.conn_id,
-                    seq_nr: 1,
+                    seq_nr: 0,
                     ack_nr: 1,
                     //seq_nr: 1,
                     //ack_nr: packet.header.seq_nr,

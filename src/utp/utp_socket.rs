@@ -76,7 +76,7 @@ impl UtpSocket {
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         });
 
-        let send = UtpPacket::new(UtpType::Ack, conn_id, 1, 0, None);
+        let send = UtpPacket::new(UtpType::Syn, conn_id, 1, 0, None);
         println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
                  send.header._type,
                  send.header.conn_id,
@@ -85,7 +85,7 @@ impl UtpSocket {
 
         self_.as_ref().unwrap().socket.send_to(send.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
 
-        println!("{:?}", self_.as_ref().unwrap().remote_addr.unwrap());
+        //println!("{:?}", self_.as_ref().unwrap().remote_addr.unwrap());
 
         let mut buf = [0u8; 65535];
 

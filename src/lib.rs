@@ -61,9 +61,9 @@ mod tests {
         loop {}
         */
 
-        let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
+        //let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
 
-        socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+        //socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
         //let mut buf = [0; 1500];
         //socket.recv(&mut buf);
@@ -75,7 +75,7 @@ mod tests {
 
 
 
-        return;
+        //return;
 
 
 
@@ -135,7 +135,7 @@ mod tests {
                     println!("{}", String::from_utf8_lossy(&buf));*/
 
 
-                    socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+                    //socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
                     //socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
