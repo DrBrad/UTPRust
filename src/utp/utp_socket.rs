@@ -10,6 +10,8 @@ use std::time::Duration;
 use crate::utils::random;
 use crate::utp::utp_listener::UtpListener;
 use crate::utp::utp_packet::{HEADER_SIZE, UtpPacket};
+use crate::utp::utp_state::UtpState;
+use crate::utp::utp_state::UtpState::{Connected, Disconnected, SynRecv, SynSent};
 use crate::utp::utp_type::UtpType;
 
 const BUF_SIZE: usize = 1500;
@@ -40,7 +42,8 @@ pub struct UtpSocket {
     pub(crate) send_conn_id: u16,
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: u16, //DO WE NEED CLIENT ACK AS WELL?
-    pub(crate) receiver: Option<Receiver<UtpPacket>>
+    pub(crate) receiver: Option<Receiver<UtpPacket>>,
+    pub(crate) state: UtpState
     //pub(crate) buffer: Vec<u8>
 }
 
@@ -56,6 +59,7 @@ impl UtpSocket {
             seq_nr: 0,
             ack_nr: 0,
             receiver: None,
+            state: Disconnected
             //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
@@ -64,7 +68,7 @@ impl UtpSocket {
     //pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
     pub fn connect(addr: SocketAddr) -> io::Result<Self> {
         let conn_id = random::gen();
-        let self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
+        let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
             remote_addr: Some(addr),
             recv_conn_id: conn_id+1,
@@ -72,6 +76,7 @@ impl UtpSocket {
             seq_nr: 1,
             ack_nr: 0,
             receiver: None,
+            state: SynSent
             //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         });
@@ -103,6 +108,10 @@ impl UtpSocket {
 
         match packet.header._type {
             UtpType::Ack => {
+                self_.as_mut().unwrap().state = Connected;
+                //self_.as_mut().unwrap().seq_nr = 0;
+                self_.as_mut().unwrap().ack_nr = packet.header.seq_nr;
+
                 self_
             }
             _ => {
@@ -135,7 +144,17 @@ impl UtpSocket {
     pub fn recv(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let packet = match &self.receiver {
             Some(receiver) => {
-                receiver.recv().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?
+                let packet = receiver.recv().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+
+                match self.state {
+                    SynRecv => {
+                        self.ack_nr = packet.header.seq_nr;
+                        self.state = Connected;
+                    }
+                    _ => {}
+                };
+
+                packet
             }
             None => {
                 let mut buf = [0; 1500];
@@ -144,57 +163,29 @@ impl UtpSocket {
             }
         };
 
-        /*
+        self.ack_nr = packet.header.seq_nr;
+/*
+        println!("RECEIVE-2 [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                 packet.header._type,
+                 packet.header.conn_id,
+                 packet.header.seq_nr,
+                 packet.header.ack_nr);
+*/
         match packet.header._type {
             UtpType::Data => {
-                self.seq_nr += 1;
-                self.socket.send_to(UtpPacket::new(UtpType::Ack, packet.header.conn_id, packet.header.seq_nr, packet.header.seq_nr, None).to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-            }
-            UtpType::Fin => {
-                //CLOSING
-            }
-            UtpType::Ack => {
-
-            }
-            UtpType::Reset => {
-                //????
-            }
-            UtpType::Syn => {
                 //NEW CONNECTION...
+                let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, None);
+                self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
+
+                println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                         pack.header._type,
+                         pack.header.conn_id,
+                         pack.header.seq_nr,
+                         pack.header.ack_nr);
+            },
+            _ => {
             }
         }
-        */
-
-        /*
-        if packet.header.seq_nr == self.ack_nr+1 {
-            self.ack_nr += 1;
-        }
-        */
-        /*
-        if self.ack_nr < packet.header.seq_nr {
-            println!("OUT OF ORDER...");
-        }
-
-        if self.ack_nr > packet.header.seq_nr {
-            println!("SAME SEQUENCE REPEAT");
-            let pack = UtpPacket::new(UtpType::Ack, packet.header.conn_id, self.seq_nr, self.seq_nr+1, None);
-            self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-            //REPEAT IGNORE
-            return self.recv(buf);
-        }
-        */
-
-        //self.ack_nr += 1;
-        //self.seq_nr += 1;
-        self.ack_nr = packet.header.seq_nr;
-        let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, None);
-        self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-
-        println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 pack.header._type,
-                 pack.header.conn_id,
-                 pack.header.seq_nr,
-                 pack.header.ack_nr);
 
         match packet.payload {
             Some(data) => {

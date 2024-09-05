@@ -8,6 +8,7 @@ use std::sync::mpsc::{channel, Receiver, RecvError, Sender, TryRecvError};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utp::utp_packet::{HEADER_SIZE, UtpHeader, UtpPacket};
 use crate::utp::utp_socket::UtpSocket;
+use crate::utp::utp_state::UtpState::SynRecv;
 use crate::utp::utp_stream::UtpStream;
 use crate::utp::utp_type::UtpType;
 
@@ -115,11 +116,12 @@ impl Iterator for Incoming<'_> {
                     remote_addr: Some(src_addr),
                     recv_conn_id: packet.header.conn_id+1,
                     send_conn_id: packet.header.conn_id,
-                    seq_nr: 0,
-                    ack_nr: 1,
+                    seq_nr: 0, //RANDOM
+                    ack_nr: packet.header.seq_nr,
                     //seq_nr: 1,
                     //ack_nr: packet.header.seq_nr,
-                    receiver: Some(rx)
+                    receiver: Some(rx),
+                    state: SynRecv
                     //incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
                 };
 
