@@ -3,5 +3,6 @@ pub enum UtpState {
     SynSent,
     SynRecv,
     Connected,
-    Disconnected
+    Waiting,
+    Closed
 }

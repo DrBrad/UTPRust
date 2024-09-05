@@ -120,6 +120,9 @@ mod tests {
                     socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
 
+
+                    socket.close().unwrap();
+
                     //socket.close().unwrap();
 
                 },

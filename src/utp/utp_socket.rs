@@ -11,7 +11,7 @@ use crate::utils::random;
 use crate::utp::utp_listener::UtpListener;
 use crate::utp::utp_packet::{HEADER_SIZE, UtpPacket};
 use crate::utp::utp_state::UtpState;
-use crate::utp::utp_state::UtpState::{Connected, Disconnected, SynRecv, SynSent};
+use crate::utp::utp_state::UtpState::{Closed, Connected, Waiting, SynRecv, SynSent};
 use crate::utp::utp_type::UtpType;
 
 const BUF_SIZE: usize = 1500;
@@ -54,12 +54,12 @@ impl UtpSocket {
         UdpSocket::bind(addr).map(|socket| Self {
             socket,
             remote_addr: None,
-            recv_conn_id: conn_id+1,
-            send_conn_id: conn_id,
+            recv_conn_id: conn_id,
+            send_conn_id: conn_id+1,
             seq_nr: 0,
             ack_nr: 0,
             receiver: None,
-            state: Disconnected
+            state: Waiting
             //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         })
@@ -71,8 +71,8 @@ impl UtpSocket {
         let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
             remote_addr: Some(addr),
-            recv_conn_id: conn_id+1,
-            send_conn_id: conn_id,
+            recv_conn_id: conn_id,
+            send_conn_id: conn_id+1,
             seq_nr: 1,
             ack_nr: 0,
             receiver: None,
@@ -125,6 +125,13 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match self.state {
+            Connected => {},
+            _ => {
+                return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"))
+            }
+        };
+
         self.seq_nr += 1;
         let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec()));
 
@@ -151,6 +158,9 @@ impl UtpSocket {
                         self.ack_nr = packet.header.seq_nr;
                         self.state = Connected;
                     }
+                    Waiting | Closed => {
+                        return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
+                    }
                     _ => {}
                 };
 
@@ -159,18 +169,20 @@ impl UtpSocket {
             None => {
                 let mut buf = [0; 1500];
                 let size = self.socket.recv(&mut buf)?;
+
+                match self.state {
+                    Connected => {},
+                    _ => {
+                        return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
+                    }
+                };
+
                 UtpPacket::from_bytes(&mut buf[..size])
             }
         };
 
         self.ack_nr = packet.header.seq_nr;
-/*
-        println!("RECEIVE-2 [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 packet.header._type,
-                 packet.header.conn_id,
-                 packet.header.seq_nr,
-                 packet.header.ack_nr);
-*/
+
         match packet.header._type {
             UtpType::Data => {
                 //NEW CONNECTION...
@@ -183,7 +195,12 @@ impl UtpSocket {
                          pack.header.seq_nr,
                          pack.header.ack_nr);
             },
+            UtpType::Fin => {
+                self.state = Closed;
+                return Err(io::Error::new(io::ErrorKind::Other, "Socket closed"))
+            },
             _ => {
+                return self.recv(buf);
             }
         }
 
