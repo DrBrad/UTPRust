@@ -27,11 +27,13 @@ impl UtpStream {
         })
     }
 
+    /*
     pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         UtpSocket::connect(addr).map(|s| Self {
             socket: s
         })
     }
+    */
 
     pub fn close(&mut self) -> io::Result<()> {
         self.socket.close()

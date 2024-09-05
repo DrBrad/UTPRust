@@ -9,11 +9,12 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
-    use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
+    use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
     use crate::utp::utp_listener::UtpListener;
+    use crate::utp::utp_socket::UtpSocket;
     use crate::utp::utp_stream::UtpStream;
 
     #[test]
@@ -59,6 +60,23 @@ mod tests {
 
         loop {}
         */
+
+        let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
+
+        socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+
+        //let mut buf = [0; 1500];
+        //socket.recv(&mut buf);
+
+        //println!("{}", String::from_utf8_lossy(&buf));
+
+
+
+
+
+
+        return;
+
 
 
         let mut listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");

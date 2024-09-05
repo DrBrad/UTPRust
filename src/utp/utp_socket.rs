@@ -53,7 +53,7 @@ impl UtpSocket {
             remote_addr: None,
             recv_conn_id: conn_id+1,
             send_conn_id: conn_id,
-            seq_nr: 1,
+            seq_nr: 0,
             ack_nr: 0,
             receiver: None,
             //buffer: Vec::new()
@@ -61,11 +61,12 @@ impl UtpSocket {
         })
     }
 
-    pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+    //pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+    pub fn connect(addr: SocketAddr) -> io::Result<Self> {
         let conn_id = random::gen();
-        UdpSocket::bind(addr).map(|socket| Self {
+        let self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
-            remote_addr: None,
+            remote_addr: Some(addr),
             recv_conn_id: conn_id+1,
             send_conn_id: conn_id,
             seq_nr: 1,
@@ -73,7 +74,41 @@ impl UtpSocket {
             receiver: None,
             //buffer: Vec::new()
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
-        })
+        });
+
+        let send = UtpPacket::new(UtpType::Ack, conn_id, 1, 0, None);
+        println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                 send.header._type,
+                 send.header.conn_id,
+                 send.header.seq_nr,
+                 send.header.ack_nr);
+
+        self_.as_ref().unwrap().socket.send_to(send.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
+
+        println!("{:?}", self_.as_ref().unwrap().remote_addr.unwrap());
+
+        let mut buf = [0u8; 65535];
+
+        let (size, src_addr) = {
+            self_.as_ref().unwrap().socket.recv_from(&mut buf).expect("Failed to receive message")
+        };
+
+        let packet = UtpPacket::from_bytes(&buf[..size]);
+
+        println!("RECEIVE [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
+                 packet.header._type,
+                 packet.header.conn_id,
+                 packet.header.seq_nr,
+                 packet.header.ack_nr);
+
+        match packet.header._type {
+            UtpType::Ack => {
+                self_
+            }
+            _ => {
+                Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
+            }
+        }
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
