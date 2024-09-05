@@ -5,7 +5,7 @@ use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, RecvError, Sender, TryRecvError};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use crate::utp::utp_packet::{HEADER_SIZE, UtpHeader, UtpPacket};
 use crate::utp::utp_socket::UtpSocket;
 use crate::utp::utp_state::UtpState::SynRecv;
@@ -116,12 +116,20 @@ impl Iterator for Incoming<'_> {
                     remote_addr: Some(src_addr),
                     recv_conn_id: packet.header.conn_id+1,
                     send_conn_id: packet.header.conn_id,
+                    last_ack_nr: 0,
                     seq_nr: 0, //RANDOM
                     ack_nr: packet.header.seq_nr,
                     //seq_nr: 1,
                     //ack_nr: packet.header.seq_nr,
                     receiver: Some(rx),
-                    state: SynRecv
+                    state: SynRecv,
+                    rtt: 0.0,
+                    rtt_var: 0.0,
+                    timeout: Duration::from_millis(1000),
+                    last_packet_sent: Instant::now(),
+                    last_packet: None,
+                    packet_rtt: Duration::from_millis(1000),
+                    max_window: 1500
                     //incoming_packets: Rc::new(RefCell::new(Vec::new()))//Arc::new(Mutex::new(Vec::new()))
                 };
 
