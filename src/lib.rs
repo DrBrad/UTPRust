@@ -71,31 +71,50 @@ mod tests {
                     //let n = socket.recv(&mut buf).unwrap();
                     //println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
 
-                    //socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
-
-
-                    //socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
-
+                    /*
                     let mut buf = [0; 1500];
                     socket.recv(&mut buf);
 
                     println!("{}", String::from_utf8_lossy(&buf));
+                    */
 
+                    /*
+                    RECEIVING...
 
+                    RECEIVE [Syn] [ConnID: 60369] [SeqNr. 1] [AckNr: 0]
+                    SEND [Ack] [ConnID: 60369] [SeqNr. 1] [AckNr: 1]
+
+                    RECEIVE [Data] [ConnID: 60370] [SeqNr. 2] [AckNr: 1]
+                    SEND [Ack] [ConnID: 60369] [SeqNr. 1] [AckNr: 2]
+
+                    RECEIVE [Data] [ConnID: 60370] [SeqNr. 3] [AckNr: 1]
+                    SEND [Ack] [ConnID: 60369] [SeqNr. 1] [AckNr: 3]
+                    */
+
+                    /*
+                    SENDING
+
+                    RECEIVE [Syn] [ConnID: 6077] [SeqNr. 1] [AckNr: 0]
+                    SEND [Ack] [ConnID: 6077] [SeqNr. 1] [AckNr: 1]
+
+                    SEND [Data] [ConnID: 6077] [SeqNr. 2] [AckNr: 1]
+                    SEND [Data] [ConnID: 6077] [SeqNr. 3] [AckNr: 1]
+
+                    RECEIVE [Ack] [ConnID: 6078] [SeqNr. 0] [AckNr: 3]
+                    */
 
                     socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
-                    //socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+                    socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
 
 
+                    /*
                     let mut buf = [0; 1500];
                     socket.recv(&mut buf);
 
                     println!("{}", String::from_utf8_lossy(&buf));
-
-
-                    //socket.send("NUMBER 2".as_bytes()).unwrap();
+                    */
 
 
                     //socket.close().unwrap();
