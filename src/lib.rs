@@ -61,21 +61,22 @@ mod tests {
         loop {}
         */
 
+
+
         /*
-        thread::spawn(|| {
-            //sleep(Duration::from_secs(5));
+        let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
 
-            let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
+        socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
-            socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
+        println!("[State [{:?}]]", socket.state);
 
-            println!("[State [{:?}]]", socket.state);
+        let mut buf = [0; 1500];
+        socket.recv(&mut buf);
 
-            let mut buf = [0; 1500];
-            socket.recv(&mut buf);
+        println!("{}", String::from_utf8_lossy(&buf));
 
-            println!("{}", String::from_utf8_lossy(&buf));
-        });
+
+        return;
         */
 
 
