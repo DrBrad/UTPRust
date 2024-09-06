@@ -168,8 +168,6 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
-        //self.check_timeout();
-
         match self.state {
             Connected => {},
             _ => {
@@ -182,18 +180,6 @@ impl UtpSocket {
         println!("SND: {}", packet.to_string());
 
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
-        /*
-        self.last_packet_sent = Instant::now();
-        self.last_packet = Some(UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, Some(buf.to_vec())));
-
-        println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 self.last_packet.as_ref().unwrap().header._type,
-                 self.last_packet.as_ref().unwrap().header.conn_id,
-                 self.last_packet.as_ref().unwrap().header.seq_nr,
-                 self.last_packet.as_ref().unwrap().header.ack_nr);
-
-        self.socket.send_to(self.last_packet.as_ref().unwrap().to_bytes().as_slice(), self.remote_addr.unwrap())
-        */
     }
 
     pub fn send_to(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -201,8 +187,6 @@ impl UtpSocket {
     }
 
     pub fn recv(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        //self.check_timeout();
-
         let packet = match &self.receiver {
             Some(receiver) => {
                 let packet = receiver.recv().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
@@ -252,24 +236,6 @@ impl UtpSocket {
             }
         };
 
-        /*
-        let now = Instant::now();
-
-        // Check if this ACK is for a packet in the range (last_ack_nr, ack_nr]
-        if self.last_ack_nr < packet.header.ack_nr && packet.header.ack_nr <= self.seq_nr {
-            let packet_rtt = now.duration_since(self.last_packet_sent).as_millis() as f64;
-
-            // Update RTT and RTT variance
-            let delta = self.rtt - packet_rtt;
-            self.rtt_var += (delta.abs() - self.rtt_var) / 4.0;
-            self.rtt += (packet_rtt - self.rtt) / 8.0;
-
-            // Update the timeout based on the RTT and variance
-            self.timeout = Duration::from_millis((self.rtt + self.rtt_var * 4.0).max(500.0) as u64);
-        }
-
-        self.last_ack_nr = packet.header.ack_nr;
-        */
         self.ack_nr = packet.header.seq_nr;
 
         match packet.header._type {
@@ -313,17 +279,4 @@ impl UtpSocket {
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
         Ok(())
     }
-
-    /*
-    fn check_timeout(&mut self) {
-        let elapsed = self.last_packet_sent.elapsed();
-
-        if elapsed > self.timeout {
-            self.max_window = 150;
-            self.timeout *= 2;
-
-            self.socket.send_to(self.last_packet.as_ref().unwrap().to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-        }
-    }
-    */
 }
