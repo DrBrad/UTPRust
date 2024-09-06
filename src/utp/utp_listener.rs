@@ -96,8 +96,15 @@ impl Iterator for Incoming<'_> {
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
                 println!("RCV: {}", packet.to_string());
+                let reply_micro = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32-packet.header.timestamp;
 
-                let send = UtpPacket::new(UtpType::Ack, packet.header.conn_id, 0, packet.header.seq_nr, 1500, None);
+                let send = UtpPacket::new(UtpType::Ack,
+                                          packet.header.conn_id,
+                                          0,
+                                          packet.header.seq_nr,
+                                          1500,
+                                          reply_micro,
+                                          None);
                 println!("SND: {}", send.to_string());
 
                 self.listener.socket.send_to(send.to_bytes().as_slice(), src_addr).unwrap();
@@ -119,7 +126,7 @@ impl Iterator for Incoming<'_> {
                     max_window: 1500,
                     cur_window: 0,
                     wnd_size: 0,
-                    reply_micro: 0
+                    reply_micro
                     /*
                     rtt: 0.0,
                     rtt_var: 0.0,

@@ -6,7 +6,7 @@ use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Receiver;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use crate::utils::random;
 use crate::utp::utp_listener::UtpListener;
 use crate::utp::utp_packet::{HEADER_SIZE, UtpPacket};
@@ -132,7 +132,7 @@ impl UtpSocket {
             state: SynSent,
 
             max_window: 1500,
-            cur_window: 0,
+            cur_window: 1500,
             wnd_size: 0,
             reply_micro: 0
         });
@@ -141,7 +141,8 @@ impl UtpSocket {
                                   conn_id,
                                   1,
                                   0,
-                                  self_.as_ref().unwrap().max_window,
+                                  self_.as_ref().unwrap().cur_window,
+                                  0,
                                   None);
 
         self_.as_ref().unwrap().socket.send_to(packet.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
@@ -165,7 +166,13 @@ impl UtpSocket {
         };
 
         self.seq_nr += 1;
-        let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, Some(buf.to_vec()));
+        let packet = UtpPacket::new(UtpType::Data,
+                                    self.send_conn_id,
+                                    self.seq_nr,
+                                    self.ack_nr,
+                                    self.cur_window,
+                                    self.reply_micro,
+                                    Some(buf.to_vec()));
         println!("SND: {}", packet.to_string());
 
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
@@ -226,11 +233,18 @@ impl UtpSocket {
         };
 
         self.ack_nr = packet.header.seq_nr;
+        self.reply_micro = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32-packet.header.timestamp;
 
         match packet.header._type {
             UtpType::Data => {
                 //NEW CONNECTION...
-                let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
+                let pack = UtpPacket::new(UtpType::Ack,
+                                          self.send_conn_id,
+                                          self.seq_nr,
+                                          self.ack_nr,
+                                          self.cur_window,
+                                          self.reply_micro,
+                                          None);
                 self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
                 println!("SND: {}", packet.to_string());
             },
@@ -262,7 +276,13 @@ impl UtpSocket {
     }
 
     pub fn close(&mut self) -> io::Result<()> {
-        let packet = UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
+        let packet = UtpPacket::new(UtpType::Fin,
+                                    self.send_conn_id,
+                                    self.seq_nr,
+                                    self.ack_nr,
+                                    self.cur_window,
+                                    self.reply_micro,
+                                    None);
         println!("SND: {}", packet.to_string());
 
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();

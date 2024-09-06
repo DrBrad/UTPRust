@@ -41,7 +41,7 @@ pub struct UtpPacket {
 
 impl UtpPacket {
 
-    pub fn new(_type: UtpType, conn_id: u16, seq_nr: u16, ack_nr: u16, wnd_size: u32, payload: Option<Vec<u8>>) -> Self {
+    pub fn new(_type: UtpType, conn_id: u16, seq_nr: u16, ack_nr: u16, wnd_size: u32, timestamp_diff: u32, payload: Option<Vec<u8>>) -> Self {
         Self {
             header: UtpHeader {
                 _type,
@@ -49,7 +49,7 @@ impl UtpPacket {
                 extension: 0,
                 conn_id,
                 timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32,
-                timestamp_diff: 0,
+                timestamp_diff,
                 wnd_size,
                 seq_nr,
                 ack_nr
