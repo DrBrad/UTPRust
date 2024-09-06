@@ -179,17 +179,24 @@ impl UtpSocket {
             return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
         }
 
-        self.seq_nr += 1;
+
+        let seq_nr = self.seq_nr+1;
         let packet = UtpPacket::new(UtpType::Data,
                                     self.send_conn_id,
-                                    self.seq_nr,
+                                    seq_nr,
                                     self.ack_nr,
                                     self.cur_window,
                                     self.reply_micro,
                                     Some(buf.to_vec()));
-        println!("SND: {}", packet.to_string());
 
-        self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
+        //if self.cur_window + seq_nr as u32 <= min(self.max_window, self.wnd_size) {
+            self.seq_nr = seq_nr;
+            println!("SND: {}", packet.to_string());
+
+            return self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap());
+        //}
+
+        //Err(io::Error::new(io::ErrorKind::Other, "Current window is full"))
     }
 
     pub fn send_to(&mut self, buf: &[u8]) -> io::Result<usize> {

@@ -125,7 +125,7 @@ impl Iterator for Incoming<'_> {
 
                     max_window: 1500,
                     cur_window: 1500,
-                    wnd_size: 0,
+                    wnd_size: packet.header.wnd_size,
                     reply_micro
                     /*
                     rtt: 0.0,
