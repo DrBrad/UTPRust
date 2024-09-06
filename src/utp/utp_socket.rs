@@ -272,11 +272,9 @@ impl UtpSocket {
         todo!()
     }
 
-    /*
     pub fn flush(&mut self) -> io::Result<()> {
         todo!()
     }
-    */
 
     pub fn close(&mut self) -> io::Result<()> {
         let packet = UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
