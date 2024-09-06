@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::cmp::min;
+use std::cmp::{min, PartialEq};
 use std::collections::HashMap;
 use std::io;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
@@ -14,6 +14,7 @@ use crate::utp::utp_state::UtpState;
 use crate::utp::utp_state::UtpState::{Closed, Connected, Waiting, SynRecv, SynSent};
 use crate::utp::utp_type::UtpType;
 
+/*
 const BUF_SIZE: usize = 1500;
 const GAIN: f64 = 1.0;
 const ALLOWED_INCREASE: u32 = 1;
@@ -31,7 +32,7 @@ const WINDOW_SIZE: u32 = 1024 * 1024; // local receive window size
 
 // Maximum time (in microseconds) to wait for incoming packets when the send window is full
 const PRE_SEND_TIMEOUT: u32 = 500_000;
-
+*/
 // Maximum age of base delay sample (60 seconds)
 //const MAX_BASE_DELAY_AGE: Delay = Delay(60_000_000);
 
@@ -174,12 +175,9 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
-        match self.state {
-            Connected => {},
-            _ => {
-                return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"))
-            }
-        };
+        if self.state != Connected {
+            return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
+        }
 
         self.seq_nr += 1;
         let packet = UtpPacket::new(UtpType::Data,
@@ -220,12 +218,9 @@ impl UtpSocket {
                 let mut buf = [0; 1500];
                 let size = self.socket.recv(&mut buf)?;
 
-                match self.state {
-                    Connected => {}
-                    _ => {
-                        return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
-                    }
-                };
+                if self.state != Connected {
+                    return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
+                }
 
                 let packet = UtpPacket::from_bytes(&mut buf[..size]);
                 println!("RCV: {}", packet.to_string());
@@ -235,6 +230,7 @@ impl UtpSocket {
         };
 
         self.ack_nr = packet.header.seq_nr;
+        self.wnd_size = packet.header.wnd_size;
         self.reply_micro = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32-packet.header.timestamp;
 
         match packet.header._type {
