@@ -103,4 +103,14 @@ impl UtpPacket {
             payload: Some(bytes[HEADER_SIZE..].to_vec())
         }
     }
+
+    pub fn to_string(&self) -> String {
+        format!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}] [WndSize: {}] [Diff: {}]",
+                self.header._type,
+                self.header.conn_id,
+                self.header.seq_nr,
+                self.header.ack_nr,
+                self.header.wnd_size,
+                self.header.timestamp_diff)
+    }
 }

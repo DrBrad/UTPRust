@@ -45,6 +45,11 @@ pub struct UtpSocket {
     pub(crate) ack_nr: u16, //DO WE NEED CLIENT ACK AS WELL?
     pub(crate) receiver: Option<Receiver<UtpPacket>>,
     pub(crate) state: UtpState,
+
+    pub(crate) max_window: u32,
+    pub(crate) cur_window: u32,
+    pub(crate) wnd_size: u32,
+    pub(crate) reply_micro: u32
     /*
     pub(crate) rtt: f64,
     pub(crate) rtt_var: f64,
@@ -55,6 +60,28 @@ pub struct UtpSocket {
     pub(crate) max_window: usize*/
     //pub(crate) buffer: Vec<u8>
 }
+/*
+impl Default for UtpSocket {
+
+    fn default() -> Self {
+        let conn_id = random::gen();
+        Self {
+            socket: (),
+            remote_addr: None,
+            recv_conn_id: 0,
+            send_conn_id: 0,
+            seq_nr: 0,
+            ack_nr: 0,
+            receiver: None,
+            state: UtpState::SynSent,
+            max_window: 0,
+            cur_window: 0,
+            wnd_size: 0,
+            reply_micro: 0,
+        }
+    }
+}
+*/
 
 impl UtpSocket {
 
@@ -70,6 +97,13 @@ impl UtpSocket {
             ack_nr: 0,
             receiver: None,
             state: Waiting,
+
+            max_window: 1500,
+            cur_window: 0,
+            wnd_size: 0,
+            reply_micro: 0
+
+            //..Default::default()
             /*
             rtt: 0.0,
             rtt_var: 0.0,
@@ -96,6 +130,11 @@ impl UtpSocket {
             ack_nr: 0,
             receiver: None,
             state: SynSent,
+
+            max_window: 1500,
+            cur_window: 0,
+            wnd_size: 0,
+            reply_micro: 0
             /*
             rtt: 0.0,
             rtt_var: 0.0,
@@ -108,43 +147,20 @@ impl UtpSocket {
             //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         });
 
-        let send = UtpPacket::new(UtpType::Syn, conn_id, 1, 0, 1500, None);
-        println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 send.header._type,
-                 send.header.conn_id,
-                 send.header.seq_nr,
-                 send.header.ack_nr);
+        let packet = UtpPacket::new(UtpType::Syn,
+                                  conn_id,
+                                  1,
+                                  0,
+                                  self_.as_ref().unwrap().max_window,
+                                  None);
 
-        self_.as_ref().unwrap().socket.send_to(send.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
+        self_.as_ref().unwrap().socket.send_to(packet.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
+        println!("SND: {}", packet.to_string());
 
         //println!("{:?}", self_.as_ref().unwrap().remote_addr.unwrap());
+        self_.as_mut().unwrap().recv(&mut [0u8; 65535]).unwrap();
 
-        let mut buf = [0u8; 65535];
-
-        let (size, src_addr) = {
-            self_.as_ref().unwrap().socket.recv_from(&mut buf).expect("Failed to receive message")
-        };
-
-        let packet = UtpPacket::from_bytes(&buf[..size]);
-
-        println!("RECEIVE [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 packet.header._type,
-                 packet.header.conn_id,
-                 packet.header.seq_nr,
-                 packet.header.ack_nr);
-
-        match packet.header._type {
-            UtpType::Ack => {
-                self_.as_mut().unwrap().state = Connected;
-                //self_.as_mut().unwrap().seq_nr = 0;
-                self_.as_mut().unwrap().ack_nr = packet.header.seq_nr;
-
-                self_
-            }
-            _ => {
-                Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
-            }
-        }
+        self_
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
@@ -163,6 +179,8 @@ impl UtpSocket {
 
         self.seq_nr += 1;
         let packet = UtpPacket::new(UtpType::Data, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, Some(buf.to_vec()));
+        println!("SND: {}", packet.to_string());
+
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
         /*
         self.last_packet_sent = Instant::now();
@@ -206,14 +224,31 @@ impl UtpSocket {
                 let mut buf = [0; 1500];
                 let size = self.socket.recv(&mut buf)?;
 
+                let packet = UtpPacket::from_bytes(&mut buf[..size]);
+                println!("RCV: {}", packet.to_string());
+
                 match self.state {
-                    Connected => {},
+                    SynSent => {
+                        match packet.header._type {
+                            UtpType::Ack => {
+                                self.state = Connected;
+                                //self_.as_mut().unwrap().seq_nr = 0;
+                                self.ack_nr = packet.header.seq_nr;
+                            }
+                            _ => {
+                                return Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
+                            }
+                        }
+
+                        return Ok(0);
+                    }
+                    Connected => {}
                     _ => {
                         return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
                     }
                 };
 
-                UtpPacket::from_bytes(&mut buf[..size])
+                packet
             }
         };
 
@@ -242,12 +277,7 @@ impl UtpSocket {
                 //NEW CONNECTION...
                 let pack = UtpPacket::new(UtpType::Ack, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
                 self.socket.send_to(pack.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
-
-                println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                         pack.header._type,
-                         pack.header.conn_id,
-                         pack.header.seq_nr,
-                         pack.header.ack_nr);
+                println!("SND: {}", packet.to_string());
             },
             UtpType::Fin => {
                 self.state = Closed;
@@ -278,12 +308,7 @@ impl UtpSocket {
 
     pub fn close(&mut self) -> io::Result<()> {
         let packet = UtpPacket::new(UtpType::Fin, self.send_conn_id, self.seq_nr, self.ack_nr, 1500, None);
-
-        println!("[{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                 packet.header._type,
-                 packet.header.conn_id,
-                 packet.header.seq_nr,
-                 packet.header.ack_nr);
+        println!("SND: {}", packet.to_string());
 
         self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap()).unwrap();
         Ok(())

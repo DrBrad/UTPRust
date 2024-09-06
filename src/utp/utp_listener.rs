@@ -53,12 +53,6 @@ impl UtpListener {
 
                 let packet = UtpPacket::from_bytes(&buf[..size]);
 
-                println!("RECEIVE [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                         packet.header._type,
-                         packet.header.conn_id,
-                         packet.header.seq_nr,
-                         packet.header.ack_nr);
-
                 match packet.header._type {
                     UtpType::Syn => {
                         tx.send((packet, src_addr)).unwrap();
@@ -101,12 +95,10 @@ impl Iterator for Incoming<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.listener.receiver.recv() {
             Ok((packet, src_addr)) => {
+                println!("RCV: {}", packet.to_string());
+
                 let send = UtpPacket::new(UtpType::Ack, packet.header.conn_id, 0, packet.header.seq_nr, 1500, None);
-                println!("SEND [{:?}] [ConnID: {}] [SeqNr. {}] [AckNr: {}]",
-                         send.header._type,
-                         send.header.conn_id,
-                         send.header.seq_nr,
-                         send.header.ack_nr);
+                println!("SND: {}", send.to_string());
 
                 self.listener.socket.send_to(send.to_bytes().as_slice(), src_addr).unwrap();
                 let (tx, rx) = channel();
@@ -123,6 +115,11 @@ impl Iterator for Incoming<'_> {
                     //ack_nr: packet.header.seq_nr,
                     receiver: Some(rx),
                     state: SynRecv,
+
+                    max_window: 1500,
+                    cur_window: 0,
+                    wnd_size: 0,
+                    reply_micro: 0
                     /*
                     rtt: 0.0,
                     rtt_var: 0.0,
