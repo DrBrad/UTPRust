@@ -124,7 +124,7 @@ impl Iterator for Incoming<'_> {
                     state: SynRecv,
 
                     max_window: 1500,
-                    cur_window: 0,
+                    cur_window: 1500,
                     wnd_size: 0,
                     reply_micro
                     /*

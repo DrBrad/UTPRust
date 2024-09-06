@@ -99,7 +99,7 @@ impl UtpSocket {
             state: Waiting,
 
             max_window: 1500,
-            cur_window: 0,
+            cur_window: 1500,
             wnd_size: 0,
             reply_micro: 0
 
@@ -148,7 +148,23 @@ impl UtpSocket {
         self_.as_ref().unwrap().socket.send_to(packet.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
         println!("SND: {}", packet.to_string());
 
-        self_.as_mut().unwrap().recv(&mut [0u8; 65535]).unwrap();
+        //self_.as_mut().unwrap().recv(&mut [0u8; 65535])?;
+
+        let mut buf = [0; 1500];
+        let size = self_.as_ref().unwrap().socket.recv(&mut buf)?;
+
+        let packet = UtpPacket::from_bytes(&mut buf[..size]);
+        println!("RCV: {}", packet.to_string());
+
+        match packet.header._type {
+            UtpType::Ack => {
+                self_.as_mut().unwrap().state = Connected;
+                self_.as_mut().unwrap().ack_nr = packet.header.seq_nr;
+            }
+            _ => {
+                return Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
+            }
+        }
 
         self_
     }
@@ -204,29 +220,15 @@ impl UtpSocket {
                 let mut buf = [0; 1500];
                 let size = self.socket.recv(&mut buf)?;
 
-                let packet = UtpPacket::from_bytes(&mut buf[..size]);
-                println!("RCV: {}", packet.to_string());
-
                 match self.state {
-                    SynSent => {
-                        match packet.header._type {
-                            UtpType::Ack => {
-                                self.state = Connected;
-                                //self_.as_mut().unwrap().seq_nr = 0;
-                                self.ack_nr = packet.header.seq_nr;
-                            }
-                            _ => {
-                                return Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
-                            }
-                        }
-
-                        return Ok(0);
-                    }
                     Connected => {}
                     _ => {
                         return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
                     }
                 };
+
+                let packet = UtpPacket::from_bytes(&mut buf[..size]);
+                println!("RCV: {}", packet.to_string());
 
                 packet
             }
