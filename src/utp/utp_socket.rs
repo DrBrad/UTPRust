@@ -100,7 +100,7 @@ impl UtpSocket {
             state: Waiting,
 
             max_window: 1500,
-            cur_window: 1500,
+            cur_window: 0,
             wnd_size: 0,
             reply_micro: 0
 
@@ -133,7 +133,7 @@ impl UtpSocket {
             state: SynSent,
 
             max_window: 1500,
-            cur_window: 1500,
+            cur_window: 0,
             wnd_size: 0,
             reply_micro: 0
         });
@@ -189,14 +189,16 @@ impl UtpSocket {
                                     self.reply_micro,
                                     Some(buf.to_vec()));
 
-        //if self.cur_window + seq_nr as u32 <= min(self.max_window, self.wnd_size) {
+
+        if self.cur_window + seq_nr as u32 <= min(self.max_window, self.wnd_size) {
             self.seq_nr = seq_nr;
+            self.cur_window += packet.to_bytes().len() as u32;
             println!("SND: {}", packet.to_string());
 
             return self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap());
-        //}
+        }
 
-        //Err(io::Error::new(io::ErrorKind::Other, "Current window is full"))
+        Err(io::Error::new(io::ErrorKind::Other, "Current window is full"))
     }
 
     pub fn send_to(&mut self, buf: &[u8]) -> io::Result<usize> {

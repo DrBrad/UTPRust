@@ -124,7 +124,7 @@ impl Iterator for Incoming<'_> {
                     state: SynRecv,
 
                     max_window: 1500,
-                    cur_window: 1500,
+                    cur_window: 0,
                     wnd_size: packet.header.wnd_size,
                     reply_micro
                     /*
