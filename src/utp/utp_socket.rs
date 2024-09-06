@@ -135,16 +135,6 @@ impl UtpSocket {
             cur_window: 0,
             wnd_size: 0,
             reply_micro: 0
-            /*
-            rtt: 0.0,
-            rtt_var: 0.0,
-            timeout: Duration::from_millis(1000),
-            last_packet_sent: Instant::now(),
-            last_packet: None,
-            packet_rtt: Duration::from_millis(1000),
-            max_window: 1500*/
-            //buffer: Vec::new()
-            //incoming_packets: Rc::new(RefCell::new(Vec::new()))
         });
 
         let packet = UtpPacket::new(UtpType::Syn,
@@ -157,7 +147,6 @@ impl UtpSocket {
         self_.as_ref().unwrap().socket.send_to(packet.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap()).unwrap();
         println!("SND: {}", packet.to_string());
 
-        //println!("{:?}", self_.as_ref().unwrap().remote_addr.unwrap());
         self_.as_mut().unwrap().recv(&mut [0u8; 65535]).unwrap();
 
         self_
