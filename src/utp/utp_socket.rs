@@ -179,7 +179,6 @@ impl UtpSocket {
             return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
         }
 
-
         let seq_nr = self.seq_nr+1;
         let packet = UtpPacket::new(UtpType::Data,
                                     self.send_conn_id,
