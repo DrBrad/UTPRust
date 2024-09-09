@@ -1,5 +1,5 @@
 use std::cmp::min;
-use std::io;
+use std::{io, thread};
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
@@ -56,6 +56,9 @@ impl UtpStream {
         });
 
         //NEW THREAD for receiver
+        thread::spawn(|_| {
+
+        });
 
 
 
