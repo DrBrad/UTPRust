@@ -9,6 +9,7 @@ use crate::utp::utp_packet::UtpPacket;
 //use crate::utp::utp_socket::UtpSocket;
 use crate::utp::utp_state::UtpState;
 use crate::utp::utp_state::UtpState::SynSent;
+use crate::utp::utp_type::UtpType;
 
 pub struct UtpStream {
     pub(crate) socket: UdpSocket,
@@ -55,9 +56,27 @@ impl UtpStream {
             transmit_buffer: Vec::new()
         });
 
+        let socket = self_?.socket;
+
         //NEW THREAD for receiver
         thread::spawn(|_| {
+            let mut buf = [0u8; 65535];
 
+            while true {
+                let (size, src_addr) = {
+                    socket.recv_from(&mut buf).expect("Failed to receive message")
+                };
+
+                let packet = UtpPacket::from_bytes(&buf[..size]);
+
+                match packet.header._type {
+                    UtpType::Ack => {
+
+                    }
+                    _ => {
+                    }
+                }
+            }
         });
 
 
