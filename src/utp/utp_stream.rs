@@ -1,96 +1,99 @@
 use std::cmp::min;
 use std::io;
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Receiver;
 use crate::utils::random;
-use crate::utp::utp_socket::UtpSocket;
+use crate::utp::utp_packet::UtpPacket;
+//use crate::utp::utp_socket::UtpSocket;
+use crate::utp::utp_state::UtpState;
+use crate::utp::utp_state::UtpState::SynSent;
 
 pub struct UtpStream {
-    socket: UtpSocket
-    /*
-    socket: UdpSocket,
-    remote_addr: SocketAddr,
-    recv_conn_id: u16,
-    send_conn_id: u16,
-    seq_nr: u16,
-    ack_nr: u16,
-    */
-    //buffer: Vec<u8>//Arc<Mutex<Vec<u8>>>
+    pub(crate) socket: UdpSocket,
+    pub(crate) remote_addr: Option<SocketAddr>,
+    pub(crate) recv_conn_id: u16,
+    pub(crate) send_conn_id: u16,
+    //pub(crate) last_ack_nr: u16,
+    pub(crate) seq_nr: u16,
+    pub(crate) ack_nr: u16, //DO WE NEED CLIENT ACK AS WELL?
+    pub(crate) receiver: Option<Receiver<UtpPacket>>,
+    pub(crate) state: UtpState,
+
+    pub(crate) max_window: u32,
+    pub(crate) cur_window: u32,
+    pub(crate) wnd_size: u32,
+    pub(crate) reply_micro: u32,
+
+    pub(crate) receive_buffer: Vec<u8>,
+    pub(crate) transmit_buffer: Vec<UtpPacket>
 }
 
 impl UtpStream {
 
-    pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        UtpSocket::bind(addr).map(|s| Self {
-            socket: s
-        })
-    }
+    //pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
+    pub fn connect(addr: SocketAddr) -> io::Result<Self> {
+        let conn_id = random::gen();
+        let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
+            socket,
+            remote_addr: Some(addr),
+            recv_conn_id: conn_id,
+            send_conn_id: conn_id+1,
+            //last_ack_nr: 0,
+            seq_nr: 1,
+            ack_nr: 0,
+            receiver: None,
+            state: SynSent,
 
-    /*
-    pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        UtpSocket::connect(addr).map(|s| Self {
-            socket: s
-        })
-    }
-    */
+            max_window: 1500,
+            cur_window: 0,
+            wnd_size: 0,
+            reply_micro: 0,
 
-    pub fn close(&mut self) -> io::Result<()> {
-        self.socket.close()
+            receive_buffer: Vec::new(),
+            transmit_buffer: Vec::new()
+        });
+
+        //NEW THREAD for receiver
+
+
+
+        self_
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
         self.socket.local_addr()
     }
 
-    pub fn set_max_retransmission_retries(&mut self, n: u32) {
-        //self.socket.max_retransmission_retries = n;
-        todo!()
+    pub fn close(&mut self) -> io::Result<()> {
+        Ok(())
     }
-    /*
-    pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
-        let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)))?;
-        let remote_addr = addr.to_socket_addrs()?.next().unwrap();
-
-        let conn_id = random::gen();
-
-        Ok(Self {
-            socket,
-            remote_addr,
-            recv_conn_id: conn_id,
-            send_conn_id: conn_id+1,
-            seq_nr: 1,
-            ack_nr: 0,
-            //buffer: Vec::new()//Arc::new(Mutex::new(Vec::new()))
-        })
-    }
-
-    pub fn send()
-
-    pub fn recv(&self) {
-
-    }
-    */
 }
+
+
 
 impl Read for UtpStream {
 
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.socket.recv_from(buf).map(|(read, _src)| read)
+        //self.socket.recv_from(buf).map(|(read, _src)| read)
+        todo!()
     }
 }
 
 impl Write for UtpStream {
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.socket.send_to(buf)
+        //self.socket.send_to(buf)
+        todo!()
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        self.socket.flush()
+        //self.socket.flush()
+        todo!()
     }
 }
-
+/*
 impl From<UtpSocket> for UtpStream {
 
     fn from(socket: UtpSocket) -> Self {
@@ -99,3 +102,4 @@ impl From<UtpSocket> for UtpStream {
         }
     }
 }
+*/

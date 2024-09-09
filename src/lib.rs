@@ -14,7 +14,6 @@ mod tests {
     use std::thread::sleep;
     use std::time::Duration;
     use crate::utp::utp_listener::UtpListener;
-    use crate::utp::utp_socket::UtpSocket;
     use crate::utp::utp_stream::UtpStream;
 
     #[test]
@@ -38,6 +37,8 @@ mod tests {
 
 
 
+        TcpStream::connect()
+
 
         let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
         for socket in listener.incoming() {
@@ -46,13 +47,16 @@ mod tests {
                     stream.write("asdasd".as_bytes());
                     stream.flush().unwrap();
                 }
-                Err(_) => {}
+                Err(_) => {
+
+                }
             }
         }
 
 
 
 
+        /*
 
         let mut listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
         //let stream = listener.incoming().next().unwrap();
@@ -60,67 +64,6 @@ mod tests {
             match socket {
                 Ok(mut socket) => {
                     println!("NEW SOCKET");
-                    //let mut buf = [0; 1500];
-                    //let n = socket.recv(&mut buf).unwrap();
-                    //println!("Packet: {}", String::from_utf8_lossy(&buf[..n]));
-
-                    /*
-                    let mut buf = [0; 1500];
-                    socket.recv(&mut buf);
-
-                    println!("{}", String::from_utf8_lossy(&buf));
-                    */
-
-                    /*
-                    RECEIVING...
-
-                    RECEIVE [Syn] [ConnID: 60369] [SeqNr. 1] [AckNr: 0]
-                    SEND [Ack] [ConnID: 60369] [SeqNr. 1] [AckNr: 1]
-
-                    RECEIVE [Data] [ConnID: 60370] [SeqNr. 2] [AckNr: 1]
-                    SEND [Ack] [ConnID: 60369] [SeqNr. 1] [AckNr: 2]
-
-                    RECEIVE [Data] [ConnID: 60370] [SeqNr. 3] [AckNr: 1]
-                    SEND [Ack] [ConnID: 60369] [SeqNr. 1] [AckNr: 3]
-                    */
-
-                    /*
-                    SENDING
-
-                    RECEIVE [Syn] [ConnID: 6077] [SeqNr. 1] [AckNr: 0]
-                    SEND [Ack] [ConnID: 6077] [SeqNr. 1] [AckNr: 1]
-
-                    SEND [Data] [ConnID: 6077] [SeqNr. 2] [AckNr: 1]
-                    SEND [Data] [ConnID: 6077] [SeqNr. 3] [AckNr: 1]
-
-                    RECEIVE [Ack] [ConnID: 6078] [SeqNr. 0] [AckNr: 3]
-                    */
-
-
-                    /*
-                    let mut buf = [0; 1500];
-                    socket.recv(&mut buf);
-
-                    println!("{}", String::from_utf8_lossy(&buf));
-
-
-                    let mut buf = [0; 1500];
-                    socket.recv(&mut buf);
-
-                    println!("{}", String::from_utf8_lossy(&buf));*/
-
-                    /*
-                    let mut buf = [0; 1500];
-                    socket.recv(&mut buf);
-
-                    println!("{}", String::from_utf8_lossy(&buf));*/
-
-
-
-
-                    //socket.send("POOP hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
-
-
 
                     let mut buf = [0; 1500];
                     socket.recv(&mut buf);
@@ -135,8 +78,6 @@ mod tests {
 
                     socket.close().unwrap();
 
-                    //socket.close().unwrap();
-
                 },
                 Err(e) => {
                     //println!("{}", e);
@@ -148,5 +89,6 @@ mod tests {
 
         }
         //assert_eq!(result, 4);
+        */
     }
 }

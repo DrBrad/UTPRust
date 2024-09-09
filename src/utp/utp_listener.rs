@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Receiver, RecvError, Sender, TryRecvError};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use crate::utp::utp_packet::{HEADER_SIZE, UtpHeader, UtpPacket};
-use crate::utp::utp_socket::UtpSocket;
+//use crate::utp::utp_socket::UtpSocket;
 use crate::utp::utp_state::UtpState::SynRecv;
 use crate::utp::utp_stream::UtpStream;
 use crate::utp::utp_type::UtpType;
@@ -77,13 +77,14 @@ impl UtpListener {
         self.socket.local_addr()
     }
 
+    /*
     pub fn incoming(&mut self) -> Incoming<'_> {
         Incoming {
             listener: self
         }
-    }
+    }*/
 }
-
+/*
 pub struct Incoming<'a> {
     listener: &'a mut UtpListener,
 }
@@ -146,3 +147,4 @@ impl Iterator for Incoming<'_> {
         }
     }
 }
+*/
