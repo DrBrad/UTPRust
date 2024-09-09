@@ -39,6 +39,18 @@ mod tests {
 
 
 
+        let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
+        for socket in listener.incoming() {
+            match socket {
+                Ok(mut stream) => {
+                    stream.write("asdasd".as_bytes());
+                    stream.flush().unwrap();
+                }
+                Err(_) => {}
+            }
+        }
+
+
 
 
 

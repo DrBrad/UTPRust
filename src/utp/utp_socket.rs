@@ -53,7 +53,7 @@ pub struct UtpSocket {
     pub(crate) reply_micro: u32,
 
     pub(crate) receive_buffer: Vec<u8>,
-    pub(crate) retransmit_buffer: Vec<UtpPacket>
+    pub(crate) transmit_buffer: Vec<UtpPacket>
 }
 
 impl UtpSocket {
@@ -78,7 +78,7 @@ impl UtpSocket {
             reply_micro: 0,
 
             receive_buffer: Vec::new(),
-            retransmit_buffer: Vec::new()
+            transmit_buffer: Vec::new()
         });
 
         self_
@@ -89,8 +89,28 @@ impl UtpSocket {
     }
 
     pub fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if self.state != Connected {
+            return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
+        }
 
-        Err(io::Error::new(io::ErrorKind::Other, "Current window is full"))
+        if (self.cur_window + buf.len() as u32) < min(self.max_window, self.wnd_size) {
+            //RATHER THAN GIVING ERROR WE SHOULD HOLD IN TRANSMIT BUFFER
+            return Err(io::Error::new(io::ErrorKind::Other, "Current window is full"));
+        }
+
+        let seq_nr = self.seq_nr+1;
+        self.cur_window += buf.len() as u32;
+
+        let packet = UtpPacket::new(UtpType::Data,
+                                    self.send_conn_id,
+                                    seq_nr,
+                                    self.ack_nr,
+                                    self.cur_window,
+                                    self.reply_micro,
+                                    Some(buf.to_vec()));
+        self.transmit_buffer.push(packet);
+
+        self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
     }
 
     pub fn send_to(&mut self, buf: &[u8]) -> io::Result<usize> {
