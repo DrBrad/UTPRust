@@ -18,13 +18,13 @@ pub struct UtpStream {
     pub(crate) send_conn_id: u16,
     //pub(crate) last_ack_nr: u16,
     pub(crate) seq_nr: u16,
-    pub(crate) ack_nr: u16, //DO WE NEED CLIENT ACK AS WELL?
+    pub(crate) ack_nr: u16,
     pub(crate) receiver: Option<Receiver<UtpPacket>>,
     pub(crate) state: UtpState,
 
-    pub(crate) max_window: u32,
-    pub(crate) cur_window: u32,
-    pub(crate) wnd_size: u32,
+    pub(crate) max_window: u32, //MAX WINDOW SIZE
+    pub(crate) cur_window: u32, //BYTES IN FLIGHT - NOT ACKED
+    pub(crate) wnd_size: u32, //WINDOW SIZE CLIENT IS ADVERTISING
     pub(crate) reply_micro: u32,
 
     pub(crate) receive_buffer: Arc<Mutex<Vec<u8>>>,
@@ -40,6 +40,8 @@ fn receiver(socket: UdpSocket, buffer: Arc<Mutex<Vec<u8>>>) {
         };
 
         let packet = UtpPacket::from_bytes(&buf[..size]);
+
+
 
         match packet.header._type {
             UtpType::Data => {
