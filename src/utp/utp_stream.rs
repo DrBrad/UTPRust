@@ -46,6 +46,7 @@ fn receiver(socket: UdpSocket, buffer: Arc<Mutex<Vec<u8>>>) {
                 buffer.lock().as_mut().unwrap().append(&mut packet.payload.unwrap());
             }
             _ => {
+                println!("PACKET");
             }
         }
     }
@@ -84,7 +85,7 @@ impl UtpStream {
                                     conn_id,
                                     1,
                                     0,
-                                    self_.as_ref().unwrap().cur_window,
+                                    self_.as_ref().unwrap().max_window,
                                     0,
                                     None);
 
@@ -107,24 +108,8 @@ impl UtpStream {
             }
         }
 
-
-
-
-
-
-
-
-
         //NEW THREAD for receiver
         thread::spawn(move || receiver(socket, receive_buffer));
-
-
-
-
-
-
-
-
 
         self_
     }
@@ -151,6 +136,9 @@ impl Read for UtpStream {
 impl Write for UtpStream {
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+
+
+
         //self.socket.send_to(buf)
         todo!()
     }
