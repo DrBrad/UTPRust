@@ -8,11 +8,11 @@ use crate::utils::random;
 use crate::utp::utp_packet::UtpPacket;
 //use crate::utp::utp_socket::UtpSocket;
 use crate::utp::utp_state::UtpState;
-use crate::utp::utp_state::UtpState::SynSent;
+use crate::utp::utp_state::UtpState::{Connected, SynSent};
 use crate::utp::utp_type::UtpType;
 
 pub struct UtpStream {
-    pub(crate) socket: UdpSocket,
+    pub socket: UdpSocket,
     pub(crate) remote_addr: Option<SocketAddr>,
     pub(crate) recv_conn_id: u16,
     pub(crate) send_conn_id: u16,
@@ -29,6 +29,26 @@ pub struct UtpStream {
 
     pub(crate) receive_buffer: Arc<Mutex<Vec<u8>>>,
     pub(crate) transmit_buffer: Vec<UtpPacket>
+}
+
+fn receiver(socket: UdpSocket, buffer: Arc<Mutex<Vec<u8>>>) {
+    let mut buf = [0u8; 65535];
+
+    loop {
+        let (size, src_addr) = {
+            socket.recv_from(&mut buf).expect("Failed to receive message")
+        };
+
+        let packet = UtpPacket::from_bytes(&buf[..size]);
+
+        match packet.header._type {
+            UtpType::Data => {
+                buffer.lock().as_mut().unwrap().append(&mut packet.payload.unwrap());
+            }
+            _ => {
+            }
+        }
+    }
 }
 
 impl UtpStream {
@@ -60,26 +80,49 @@ impl UtpStream {
 
         let socket = self_.as_ref().unwrap().socket.try_clone()?;
 
-        //NEW THREAD for receiver
-        thread::spawn(move || {
-            let mut buf = [0u8; 65535];
+        let packet = UtpPacket::new(UtpType::Syn,
+                                    conn_id,
+                                    1,
+                                    0,
+                                    self_.as_ref().unwrap().cur_window,
+                                    0,
+                                    None);
 
-            loop {
-                let (size, src_addr) = {
-                    socket.recv_from(&mut buf).expect("Failed to receive message")
-                };
+        socket.send_to(packet.to_bytes().as_slice(), self_.as_ref().unwrap().remote_addr.unwrap())?;
+        println!("SND: {}", packet.to_string());
 
-                let packet = UtpPacket::from_bytes(&buf[..size]);
+        let mut buf = [0; 1500];
+        let size = self_.as_ref().unwrap().socket.recv(&mut buf)?;
 
-                match packet.header._type {
-                    UtpType::Data => {
-                        receive_buffer.lock().as_mut().unwrap().append(&mut packet.payload.unwrap());
-                    }
-                    _ => {
-                    }
-                }
+        let packet = UtpPacket::from_bytes(&mut buf[..size]);
+        println!("RCV: {}", packet.to_string());
+
+        match packet.header._type {
+            UtpType::Ack => {
+                self_.as_mut().unwrap().state = Connected;
+                self_.as_mut().unwrap().ack_nr = packet.header.seq_nr;
             }
-        });
+            _ => {
+                return Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
+            }
+        }
+
+
+
+
+
+
+
+
+
+        //NEW THREAD for receiver
+        thread::spawn(move || receiver(socket, receive_buffer));
+
+
+
+
+
+
 
 
 
