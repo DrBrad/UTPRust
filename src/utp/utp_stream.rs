@@ -27,7 +27,7 @@ pub struct UtpStream {
     pub(crate) wnd_size: u32,
     pub(crate) reply_micro: u32,
 
-    pub(crate) receive_buffer: Vec<u8>,
+    pub(crate) receive_buffer: Arc<Mutex<Vec<u8>>>,
     pub(crate) transmit_buffer: Vec<UtpPacket>
 }
 
@@ -36,6 +36,7 @@ impl UtpStream {
     //pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
     pub fn connect(addr: SocketAddr) -> io::Result<Self> {
         let conn_id = random::gen();
+        let receive_buffer = Arc::new(Mutex::new(Vec::new()));
 
         let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
@@ -53,11 +54,10 @@ impl UtpStream {
             wnd_size: 0,
             reply_micro: 0,
 
-            receive_buffer: Vec::new(),
+            receive_buffer: receive_buffer.clone(),
             transmit_buffer: Vec::new()
         });
 
-        /*
         let socket = self_.as_ref().unwrap().socket.try_clone()?;
 
         //NEW THREAD for receiver
@@ -80,33 +80,10 @@ impl UtpStream {
                 }
             }
         });
-        */
-
-        self_.as_mut().unwrap().receiver();
 
 
 
         self_
-    }
-
-    async fn receiver(&mut self) {
-        let mut buf = [0u8; 65535];
-
-        loop {
-            let (size, src_addr) = {
-                self.socket.recv_from(&mut buf).expect("Failed to receive message")
-            };
-
-            let packet = UtpPacket::from_bytes(&buf[..size]);
-
-            match packet.header._type {
-                UtpType::Data => {
-                    self.receive_buffer.append(&mut packet.payload.unwrap());
-                }
-                _ => {
-                }
-            }
-        }
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
