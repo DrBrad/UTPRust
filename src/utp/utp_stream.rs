@@ -3,6 +3,7 @@ use std::{io, thread};
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicU16, AtomicU32, Ordering};
 use std::sync::mpsc::Receiver;
 use crate::utils::random;
 use crate::utp::utp_packet::UtpPacket;
@@ -18,13 +19,13 @@ pub struct UtpStream {
     pub(crate) send_conn_id: u16,
     //pub(crate) last_ack_nr: u16,
     pub(crate) seq_nr: u16,
-    pub(crate) ack_nr: u16,
+    pub(crate) ack_nr: Arc<AtomicU16>,//u16,
     pub(crate) receiver: Option<Receiver<UtpPacket>>,
     pub(crate) state: UtpState,
 
     pub(crate) max_window: u32, //MAX WINDOW SIZE
     pub(crate) cur_window: u32, //BYTES IN FLIGHT - NOT ACKED
-    pub(crate) wnd_size: u32, //WINDOW SIZE CLIENT IS ADVERTISING
+    pub(crate) wnd_size: Arc<AtomicU32>, //u32, //WINDOW SIZE CLIENT IS ADVERTISING
     pub(crate) reply_micro: u32,
 
     pub(crate) receive_buffer: Arc<Mutex<Vec<u8>>>,
@@ -60,6 +61,8 @@ impl UtpStream {
     pub fn connect(addr: SocketAddr) -> io::Result<Self> {
         let conn_id = random::gen();
         let receive_buffer = Arc::new(Mutex::new(Vec::new()));
+        let ack_nr = Arc::new(AtomicU16::new(0));
+        let wnd_size = Arc::new(AtomicU32::new(0));
 
         let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
@@ -68,13 +71,13 @@ impl UtpStream {
             send_conn_id: conn_id+1,
             //last_ack_nr: 0,
             seq_nr: 1,
-            ack_nr: 0,
+            ack_nr: ack_nr.clone(),
             receiver: None,
             state: SynSent,
 
             max_window: 1500,
             cur_window: 0,
-            wnd_size: 0,
+            wnd_size: wnd_size.clone(),
             reply_micro: 0,
 
             receive_buffer: receive_buffer.clone(),
@@ -103,7 +106,7 @@ impl UtpStream {
         match packet.header._type {
             UtpType::Ack => {
                 self_.as_mut().unwrap().state = Connected;
-                self_.as_mut().unwrap().ack_nr = packet.header.seq_nr;
+                self_.as_mut().unwrap().ack_nr.store(packet.header.seq_nr, Ordering::Relaxed);
             }
             _ => {
                 return Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
