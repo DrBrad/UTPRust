@@ -13,9 +13,16 @@ mod tests {
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
+    use crate::utp::socket::UtpSocket;
 
     #[test]
     fn test() {
+
+        let socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
+
+
+
+
         //let mut stream = UtpStream::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
 
         //stream.write("asdasdasd".as_bytes()).unwrap();
