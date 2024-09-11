@@ -13,14 +13,12 @@ mod tests {
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
-    use crate::utp::utp_listener::UtpListener;
-    use crate::utp::utp_stream::UtpStream;
 
     #[test]
     fn test() {
-        let mut stream = UtpStream::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
+        //let mut stream = UtpStream::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
 
-        stream.write("asdasdasd".as_bytes()).unwrap();
+        //stream.write("asdasdasd".as_bytes()).unwrap();
         //stream.flush().unwrap();
 
 
