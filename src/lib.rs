@@ -18,8 +18,16 @@ mod tests {
 
     #[test]
     fn test() {
+        let mut stream = UtpStream::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
+
+        stream.write("asdasdasd".as_bytes()).unwrap();
+        //stream.flush().unwrap();
+
+
+
+
         /*
-        let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
+        //let mut socket = UtpSocket::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
 
         socket.send("TEST hello world asdjasidjaisjdijasidjaisdjiasjd".as_bytes()).unwrap();
 
@@ -36,7 +44,6 @@ mod tests {
 
 
 
-        //let mut stream = UtpStream::connect(SocketAddr::from((IpAddr::from([127, 0, 0, 1]), 7070))).unwrap();
 
 
 

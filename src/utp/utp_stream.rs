@@ -2,7 +2,8 @@ use std::cmp::min;
 use std::{io, thread};
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
-use std::sync::{Arc, Mutex};
+use std::os::linux::raw::stat;
+use std::sync::{Arc, Mutex, RwLock};
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::mpsc::Receiver;
@@ -23,7 +24,7 @@ pub struct UtpStream {
     pub(crate) seq_nr: u16,
     pub(crate) ack_nr: Arc<AtomicU16>,//u16,
     pub(crate) receiver: Option<Receiver<UtpPacket>>,
-    pub(crate) state: UtpState,
+    pub(crate) state: Arc<RwLock<UtpState>>,
 
     pub(crate) max_window: u32, //MAX WINDOW SIZE
     pub(crate) cur_window: u32, //BYTES IN FLIGHT - NOT ACKED
@@ -69,6 +70,7 @@ impl UtpStream {
         let ack_nr = Arc::new(AtomicU16::new(0));
         let wnd_size = Arc::new(AtomicU32::new(0));
         let reply_micro = Arc::new(AtomicU32::new(0));
+        let state = Arc::new(RwLock::new(SynSent));
 
         let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
@@ -79,7 +81,7 @@ impl UtpStream {
             seq_nr: 1,
             ack_nr: ack_nr.clone(),
             receiver: None,
-            state: SynSent,
+            state: state.clone(),
 
             max_window: 1500,
             cur_window: 0,
@@ -111,13 +113,17 @@ impl UtpStream {
 
         match packet.header._type {
             UtpType::Ack => {
-                self_.as_mut().unwrap().state = Connected;
-                self_.as_mut().unwrap().ack_nr.store(packet.header.seq_nr, Ordering::Relaxed);
+                *state.write().unwrap() = Connected;
+                //self_.as_mut().unwrap().state = Connected;
+                self_.as_mut().unwrap().ack_nr.store(packet.header.seq_nr, Relaxed);
             }
             _ => {
                 return Err(io::Error::new(io::ErrorKind::Other, "Unhandled packet type"))
             }
         }
+
+
+
 
         //NEW THREAD for receiver
         thread::spawn(move || {
@@ -130,12 +136,14 @@ impl UtpStream {
 
                 let packet = UtpPacket::from_bytes(&buf[..size]);
 
-
                 ack_nr.store(packet.header.seq_nr, Relaxed);
                 wnd_size.store(packet.header.wnd_size, Relaxed);
                 reply_micro.store(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32-packet.header.timestamp, Relaxed);
 
                 match packet.header._type {
+                    UtpType::Ack => {
+                        *state.write().unwrap() = Connected;
+                    }
                     UtpType::Data => {
                         receive_buffer.lock().as_mut().unwrap().append(&mut packet.payload.unwrap());
                     }
@@ -173,11 +181,23 @@ impl Read for UtpStream {
 impl Write for UtpStream {
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if *self.state.read().unwrap() != Connected {
+            return Err(io::Error::new(io::ErrorKind::Other, "Socket not connected"));
+        }
 
+        let seq_nr = self.seq_nr+1;
+        let packet = UtpPacket::new(UtpType::Data,
+                                    self.send_conn_id,
+                                    seq_nr,
+                                    self.ack_nr.load(Relaxed),
+                                    self.cur_window,
+                                    self.reply_micro.load(Relaxed),
+                                    Some(buf.to_vec()));
 
+        self.socket.send_to(packet.to_bytes().as_slice(), self.remote_addr.unwrap())
 
         //self.socket.send_to(buf)
-        todo!()
+        //todo!()
     }
 
     fn flush(&mut self) -> io::Result<()> {
