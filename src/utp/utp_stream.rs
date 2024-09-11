@@ -5,6 +5,7 @@ use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering};
 use std::sync::mpsc::Receiver;
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utils::random;
 use crate::utp::utp_packet::UtpPacket;
 //use crate::utp::utp_socket::UtpSocket;
@@ -26,7 +27,7 @@ pub struct UtpStream {
     pub(crate) max_window: u32, //MAX WINDOW SIZE
     pub(crate) cur_window: u32, //BYTES IN FLIGHT - NOT ACKED
     pub(crate) wnd_size: Arc<AtomicU32>, //u32, //WINDOW SIZE CLIENT IS ADVERTISING
-    pub(crate) reply_micro: u32,
+    pub(crate) reply_micro: Arc<AtomicU32>, //u32,
 
     pub(crate) receive_buffer: Arc<Mutex<Vec<u8>>>,
     pub(crate) transmit_buffer: Vec<UtpPacket>
@@ -43,6 +44,9 @@ fn receiver(socket: UdpSocket, buffer: Arc<Mutex<Vec<u8>>>) {
         let packet = UtpPacket::from_bytes(&buf[..size]);
 
 
+        //self.ack_nr = packet.header.seq_nr;
+        //self.wnd_size = packet.header.wnd_size;
+        //self.reply_micro = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32-packet.header.timestamp;
 
         match packet.header._type {
             UtpType::Data => {
@@ -63,6 +67,7 @@ impl UtpStream {
         let receive_buffer = Arc::new(Mutex::new(Vec::new()));
         let ack_nr = Arc::new(AtomicU16::new(0));
         let wnd_size = Arc::new(AtomicU32::new(0));
+        let reply_micro = Arc::new(AtomicU32::new(0));
 
         let mut self_ = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0))).map(|socket| Self {
             socket,
@@ -78,7 +83,7 @@ impl UtpStream {
             max_window: 1500,
             cur_window: 0,
             wnd_size: wnd_size.clone(),
-            reply_micro: 0,
+            reply_micro: reply_micro.clone(),
 
             receive_buffer: receive_buffer.clone(),
             transmit_buffer: Vec::new()
