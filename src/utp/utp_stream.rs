@@ -4,6 +4,7 @@ use std::io::{ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering};
+use std::sync::atomic::Ordering::Relaxed;
 use std::sync::mpsc::Receiver;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utils::random;
@@ -119,7 +120,31 @@ impl UtpStream {
         }
 
         //NEW THREAD for receiver
-        thread::spawn(move || receiver(socket, receive_buffer));
+        thread::spawn(move || {
+            let mut buf = [0u8; 65535];
+
+            loop {
+                let (size, src_addr) = {
+                    socket.recv_from(&mut buf).expect("Failed to receive message")
+                };
+
+                let packet = UtpPacket::from_bytes(&buf[..size]);
+
+
+                ack_nr.store(packet.header.seq_nr, Relaxed);
+                wnd_size.store(packet.header.wnd_size, Relaxed);
+                reply_micro.store(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u32-packet.header.timestamp, Relaxed);
+
+                match packet.header._type {
+                    UtpType::Data => {
+                        receive_buffer.lock().as_mut().unwrap().append(&mut packet.payload.unwrap());
+                    }
+                    _ => {
+                        println!("PACKET");
+                    }
+                }
+            }
+        });//receiver(socket, receive_buffer, ack_nr, wnd_size, reply_micro));
 
         self_
     }
@@ -138,8 +163,10 @@ impl UtpStream {
 impl Read for UtpStream {
 
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        //self.socket.recv_from(buf).map(|(read, _src)| read)
-        todo!()
+        let n = min(buf.len(), self.receive_buffer.lock().unwrap().len());
+        buf[..n].copy_from_slice(&self.receive_buffer.lock().unwrap()[..n]);
+        self.receive_buffer.lock().unwrap().drain(..n);
+        Ok(n)
     }
 }
 
