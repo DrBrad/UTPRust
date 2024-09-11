@@ -33,7 +33,7 @@ pub struct UtpStream {
     pub(crate) receive_buffer: Arc<Mutex<Vec<u8>>>,
     pub(crate) transmit_buffer: Vec<UtpPacket>
 }
-
+/*
 fn receiver(socket: UdpSocket, buffer: Arc<Mutex<Vec<u8>>>) {
     let mut buf = [0u8; 65535];
 
@@ -59,7 +59,7 @@ fn receiver(socket: UdpSocket, buffer: Arc<Mutex<Vec<u8>>>) {
         }
     }
 }
-
+*/
 impl UtpStream {
 
     //pub fn connect<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
