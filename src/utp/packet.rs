@@ -1,5 +1,5 @@
 use std::fmt;
-
+use std::fmt::{Debug, Formatter};
 /*
 0       4       8               16              24              32
 +-------+-------+---------------+---------------+---------------+
@@ -253,6 +253,20 @@ impl UtpPacket {
     }
 }
 
+impl Debug for UtpPacket {
+
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "packet cid={} packetType={} seqNr={} ackNr={} timestamp={} timestampDiff={} remoteWindow={}",
+               self.conn_id(),
+               self.packet_type(),
+               self.seq_num(),
+               self.ack_num(),
+               self.ts_micros(),
+               self.ts_diff_micros(),
+               self.window_size(),
+        )
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct PacketBuilder {
