@@ -81,7 +81,7 @@ impl/*<P>*/ UtpSocket//<P>
                         if packet.packet_type() == UtpPacketType::Syn {
                             let cid = packet.conn_id();
 
-                            println!("{}", cid);
+                            println!("{:?}", packet);
 
 
                         }
