@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, RwLock};
+use crate::utp::stream::UtpStream;
 
 pub struct UtpSocket<P> {
     conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
@@ -29,12 +30,12 @@ where
         todo!()
     }
 
-    pub fn accept(&self)/* -> io::Result<UtpStream>*/ {
-
+    pub fn accept(&self) -> io::Result<UtpStream> {
+        todo!()
     }
 
-    pub fn connect(&self) {
-
+    pub fn connect(&self) -> io::Result<UtpStream> {
+        todo!()
     }
 
     fn generate_cid(&self) {
