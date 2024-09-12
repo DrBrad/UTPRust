@@ -24,8 +24,8 @@ impl UtpSocket {
     }
 
     pub fn with_socket(mut socket: UdpSocket) -> Self {
-        let (incoming_tx, incoming_rx) = mpsc::channel();
-        let (pool_tx, pool_rx) = mpsc::channel();
+        let (incoming_tx, incoming_rx) = channel();
+        let (pool_tx, pool_rx) = channel();
 
         thread::spawn(move || {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
@@ -59,7 +59,8 @@ impl UtpSocket {
                 match pool_rx.try_recv() {
                     Ok((packet, src_addr)) => {
                         //Self::on_receive();
-                        match conns.read().unwrap().get(&packet.conn_id()) {
+                        let conn = conns.read().unwrap().get(&packet.conn_id()).cloned();
+                        match conn {
                             Some(conn) => {
                                 conn.send(StreamEvent::Incoming(packet)).unwrap();
 
@@ -70,10 +71,13 @@ impl UtpSocket {
 
                                     println!("{:?}", packet);
 
-                                    let (tx, rx) = mpsc::channel();
+                                    let (tx, rx) = channel();
+                                    //conns.write().unwrap().insert(cid, tx);
                                     conns.write().unwrap().insert(cid, tx);
+
                                     incoming_tx.send(UtpStream::new(cid, rx)).unwrap();
 
+                                    println!("asdasd");
                                 }
                             }
                         }

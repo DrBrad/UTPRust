@@ -22,7 +22,8 @@ mod tests {
         let mut socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
 
         for mut stream in socket.incoming() {
-            stream.write("asdasdasd".as_bytes()).unwrap();
+            println!("INCOMING");
+            //stream.write("asdasdasd".as_bytes()).unwrap();
 
         }
 
