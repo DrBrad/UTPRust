@@ -1,2 +1,3 @@
 pub mod socket;
-mod stream;
+pub mod stream;
+pub mod packet;

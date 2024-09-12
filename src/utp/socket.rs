@@ -2,12 +2,13 @@ use std::collections::HashMap;
 use std::{io, thread};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, RwLock};
+use crate::utp::packet::UtpPacket;
 use crate::utp::stream::UtpStream;
 
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
 pub struct UtpSocket<P> {
-    conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
+    //conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
     //accepts: UnboundedSender<Accept<P>>,
     //accepts_with_cid: UnboundedSender<(Accept<P>, ConnectionId<P>)>,
     //socket_events: UnboundedSender<SocketEvent<P>>,
@@ -21,8 +22,8 @@ impl UtpSocket<SocketAddr> {
 }
 
 impl<P> UtpSocket<P>
-where
-    P: ConnectionPeer + 'static,
+//where
+//    P: ConnectionPeer + 'static,
 {
 
     pub fn with_socket<S>(mut socket: S) -> Self
@@ -38,7 +39,7 @@ where
                     socket.recv_from(&mut buf).expect("Failed to receive message")
                 };
 
-                let packet;
+                let packet = UtpPacket::decode(&buf[..size])?;
 
 
 
