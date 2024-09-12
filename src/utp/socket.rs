@@ -3,6 +3,7 @@ use std::{io, thread};
 use std::fmt::{Debug, Display};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, RwLock};
+use crate::utp::cid::ConnectionId;
 use crate::utp::packet::UtpPacket;
 use crate::utp::stream::UtpStream;
 
@@ -60,10 +61,18 @@ impl<P> UtpSocket<P>
         todo!()
     }
 
-    fn generate_cid(&self) {
-
+    fn generate_cid(&self) -> ConnectionId<P> {
+        todo!()
     }
 }
-
+/*
+impl<P> Drop for UtpSocket<P> {
+    fn drop(&mut self) {
+        for conn in self.conns.read().unwrap().values() {
+            let _ = conn.send(StreamEvent::Shutdown);
+        }
+    }
+}
+*/
 
 
