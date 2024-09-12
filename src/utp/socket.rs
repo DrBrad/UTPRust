@@ -4,36 +4,23 @@ use std::fmt::{Debug, Display};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{mpsc, Arc, RwLock};
 use std::sync::mpsc::{Receiver, Sender};
-use crate::utp::cid::{ConnectionId, ConnectionPeer};
 use crate::utp::event::{SocketEvent, StreamEvent};
 use crate::utp::packet::{UtpPacket, UtpPacketType};
 use crate::utp::stream::UtpStream;
 
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
-type ConnChannel = Sender<StreamEvent>;
+//type ConnChannel = Sender<StreamEvent>;
 
 pub struct UtpSocket {//<P> {
-    conns: Arc<RwLock<HashMap<u16, ConnChannel>>>,
+    conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>,
     //conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
     //accepts: Sender<Accept<P>>,
     //accepts_with_cid: Sender<(Accept<P>, ConnectionId<P>)>,
     //socket_events: Sender<SocketEvent<P>>,
 }
 
-/*
-impl UtpSocket<SocketAddr> {
-
-    pub fn bind(addr: SocketAddr) -> io::Result<Self> {
-        let socket = UdpSocket::bind(addr)?;
-        Ok(Self::with_socket(socket))
-    }
-}
-*/
-impl/*<P>*/ UtpSocket//<P>
-//where
-//    P: ConnectionPeer + 'static,
-{
+impl UtpSocket {
 
     pub fn bind(addr: SocketAddr) -> io::Result<Self> {
         let socket = UdpSocket::bind(addr)?;
@@ -82,6 +69,13 @@ impl/*<P>*/ UtpSocket//<P>
                             let cid = packet.conn_id();
 
                             println!("{:?}", packet);
+
+                            let (tx, rx) = mpsc::channel();
+                            conns.write().unwrap().insert(cid, tx);
+
+                            let stream = UtpStream::new(cid, rx);
+
+
 
 
                         }
