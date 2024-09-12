@@ -1,3 +1,4 @@
+use std::fmt;
 
 /*
 0       4       8               16              24              32
@@ -13,7 +14,6 @@
 | seq_nr                        | ack_nr                        |
 +---------------+---------------+---------------+---------------+
 */
-use std::fmt;
 
 const PACKET_HEADER_LEN: usize = 20;
 const SELECTIVE_ACK_BITS: usize = 32;
@@ -56,9 +56,9 @@ impl UtpPacketHeader {
         bytes
     }
 
-    pub fn decode(value: &[u8]) -> Result<Self, PacketHeaderError> {
+    pub fn decode(value: &[u8]) -> Result<Self, UtpPacketHeaderError> {
         if value.len() != PACKET_HEADER_LEN {
-            return Err(PacketHeaderError::InvalidLen);
+            return Err(UtpPacketHeaderError::InvalidLen);
         }
 
         let packet_type = value[0] >> 4;
@@ -173,9 +173,9 @@ impl UtpPacket {
         bytes
     }
 
-    pub fn decode(value: &[u8]) -> Result<Self, PacketError> {
+    pub fn decode(value: &[u8]) -> Result<Self, UtpPacketError> {
         if value.len() < PACKET_HEADER_LEN {
-            return Err(PacketError::InvalidHeader(PacketHeaderError::InvalidLen));
+            return Err(UtpPacketError::InvalidHeader(UtpPacketHeaderError::InvalidLen));
         }
 
         let mut header: [u8; PACKET_HEADER_LEN] = [0; PACKET_HEADER_LEN];
@@ -207,7 +207,7 @@ impl UtpPacket {
         };
 
         if header.packet_type == UtpPacketType::Data && payload.is_empty() {
-            return Err(PacketError::EmptyDataPayload);
+            return Err(UtpPacketError::EmptyDataPayload);
         }
 
         Ok(Self {
@@ -253,7 +253,120 @@ impl UtpPacket {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+
+#[derive(Clone, Debug)]
+pub struct PacketBuilder {
+    packet_type: UtpPacketType,
+    conn_id: u16,
+    ts_micros: u32,
+    ts_diff_micros: u32,
+    window_size: u32,
+    seq_num: u16,
+    ack_num: u16,
+    selective_ack: Option<SelectiveAck>,
+    payload: Option<Vec<u8>>,
+}
+
+impl PacketBuilder {
+
+    pub fn new(
+        packet_type: UtpPacketType,
+        conn_id: u16,
+        ts_micros: u32,
+        window_size: u32,
+        seq_num: u16,
+    ) -> Self {
+        Self {
+            packet_type,
+            conn_id,
+            ts_micros,
+            ts_diff_micros: 0,
+            window_size,
+            seq_num,
+            ack_num: 0,
+            selective_ack: None,
+            payload: None,
+        }
+    }
+
+    pub fn ts_micros(mut self, ts_micros: u32) -> Self {
+        self.ts_micros = ts_micros;
+        self
+    }
+
+    pub fn ts_diff_micros(mut self, ts_diff_micros: u32) -> Self {
+        self.ts_diff_micros = ts_diff_micros;
+        self
+    }
+
+    pub fn window_size(mut self, window_size: u32) -> Self {
+        self.window_size = window_size;
+        self
+    }
+
+    pub fn ack_num(mut self, ack_num: u16) -> Self {
+        self.ack_num = ack_num;
+        self
+    }
+
+    pub fn selective_ack(mut self, selective_ack: Option<SelectiveAck>) -> Self {
+        self.selective_ack = selective_ack;
+        self
+    }
+
+    pub fn payload(mut self, payload: Vec<u8>) -> Self {
+        self.payload = Some(payload);
+        self
+    }
+
+    pub fn build(self) -> UtpPacket {
+        let extension = match self.selective_ack {
+            Some(..) => Extension::SelectiveAck,
+            None => Extension::None,
+        };
+
+        UtpPacket {
+            header: UtpPacketHeader {
+                packet_type: self.packet_type,
+                version: Version::One,
+                extension,
+                conn_id: self.conn_id,
+                ts_micros: self.ts_micros,
+                ts_diff_micros: self.ts_diff_micros,
+                window_size: self.window_size,
+                seq_num: self.seq_num,
+                ack_num: self.ack_num,
+            },
+            selective_ack: self.selective_ack,
+            payload: self.payload.unwrap_or_default(),
+        }
+    }
+}
+
+impl From<UtpPacket> for PacketBuilder {
+
+    fn from(packet: UtpPacket) -> Self {
+        let payload = if packet.payload.is_empty() {
+            None
+        } else {
+            Some(packet.payload)
+        };
+
+        Self {
+            packet_type: packet.header.packet_type,
+            conn_id: packet.header.conn_id,
+            ts_micros: packet.header.ts_micros,
+            ts_diff_micros: packet.header.ts_diff_micros,
+            window_size: packet.header.window_size,
+            seq_num: packet.header.seq_num,
+            ack_num: packet.header.ack_num,
+            selective_ack: packet.selective_ack,
+            payload,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum UtpPacketType {
     Data,
     Fin,
@@ -312,6 +425,7 @@ enum Version {
 }
 
 impl TryFrom<u8> for Version {
+
     type Error = InvalidVersion;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -323,6 +437,7 @@ impl TryFrom<u8> for Version {
 }
 
 impl From<Version> for u8 {
+
     fn from(value: Version) -> u8 {
         match value {
             Version::One => 1,
@@ -338,6 +453,7 @@ enum Extension {
 }
 
 impl From<u8> for Extension {
+
     fn from(value: u8) -> Self {
         match value {
             0 => Self::None,
@@ -348,6 +464,7 @@ impl From<u8> for Extension {
 }
 
 impl From<Extension> for u8 {
+
     fn from(value: Extension) -> u8 {
         match value {
             Extension::None => 0,
@@ -363,6 +480,7 @@ pub struct SelectiveAck {
 }
 
 impl SelectiveAck {
+
     pub fn new(acked: Vec<bool>) -> Self {
         let chunks = acked.as_slice().chunks_exact(SELECTIVE_ACK_BITS);
         let remainder = chunks.remainder();
@@ -452,5 +570,135 @@ impl SelectiveAck {
         }
 
         Ok(Self { acked })
+    }
+}
+
+
+
+#[derive(Copy, Clone, Debug)]
+pub struct InvalidPacketType;
+
+impl fmt::Display for InvalidPacketType {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "invalid uTP packet type")
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum SelectiveAckError {
+    InsufficientLen,
+    InvalidLen,
+}
+
+impl From<SelectiveAckError> for UtpPacketError {
+
+    fn from(value: SelectiveAckError) -> Self {
+        Self::InvalidExtension(ExtensionError::from(value))
+    }
+}
+
+impl fmt::Display for SelectiveAckError {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::InsufficientLen => "selective ACK len must be at least 32 bits",
+            Self::InvalidLen => "selective ACK len must be a multiple of 32 bits",
+        };
+
+        write!(f, "{}", s)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ExtensionError {
+    InsufficientLen,
+    InvalidSelectiveAck(SelectiveAckError),
+}
+
+impl From<SelectiveAckError> for ExtensionError {
+
+    fn from(value: SelectiveAckError) -> Self {
+        Self::InvalidSelectiveAck(value)
+    }
+}
+
+impl fmt::Display for ExtensionError {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s: String = match self {
+            Self::InsufficientLen => String::from("insufficient extension len"),
+            Self::InvalidSelectiveAck(err) => err.to_string(),
+        };
+
+        write!(f, "{}", s)
+    }
+}
+
+impl fmt::Display for InvalidPacketType {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "invalid uTP packet type")
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct InvalidVersion;
+
+impl fmt::Display for InvalidVersion {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "invalid uTP version")
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum UtpPacketHeaderError {
+    InvalidPacketType(InvalidPacketType),
+    InvalidVersion(InvalidVersion),
+    InvalidExtension(ExtensionError),
+    InvalidLen,
+}
+
+impl From<InvalidPacketType> for UtpPacketHeaderError {
+
+    fn from(value: InvalidPacketType) -> Self {
+        Self::InvalidPacketType(value)
+    }
+}
+
+impl From<InvalidVersion> for UtpPacketHeaderError {
+
+    fn from(value: InvalidVersion) -> Self {
+        Self::InvalidVersion(value)
+    }
+}
+
+impl From<ExtensionError> for UtpPacketHeaderError {
+
+    fn from(value: ExtensionError) -> Self {
+        Self::InvalidExtension(value)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum UtpPacketError {
+    InvalidHeader(UtpPacketHeaderError),
+    InvalidExtension(ExtensionError),
+    InvalidLen,
+    EmptyDataPayload,
+}
+
+impl From<UtpPacketHeaderError> for UtpPacketError {
+
+    fn from(value: UtpPacketHeaderError) -> Self {
+        Self::InvalidHeader(value)
+    }
+}
+
+impl From<ExtensionError> for UtpPacketError {
+
+    fn from(value: ExtensionError) -> Self {
+        Self::InvalidExtension(value)
     }
 }
