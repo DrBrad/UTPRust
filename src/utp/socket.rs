@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::{io, thread};
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, RwLock};
 use crate::utp::packet::UtpPacket;
@@ -41,7 +41,7 @@ impl<P> UtpSocket<P>
                 };
 
                 let packet = UtpPacket::decode(&buf[..size])?;
-
+                println!("{packet}")
 
 
 
