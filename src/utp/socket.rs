@@ -4,7 +4,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, RwLock};
 
 pub struct UtpSocket<P> {
-    conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
+    //conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
     //accepts: UnboundedSender<Accept<P>>,
     //accepts_with_cid: UnboundedSender<(Accept<P>, ConnectionId<P>)>,
     //socket_events: UnboundedSender<SocketEvent<P>>,
