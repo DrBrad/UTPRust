@@ -3,21 +3,17 @@ use std::{io, thread};
 use std::fmt::{Debug, Display};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{mpsc, Arc, RwLock};
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::utp::event::{SocketEvent, StreamEvent};
 use crate::utp::packet::{UtpPacket, UtpPacketType};
 use crate::utp::stream::UtpStream;
 
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
-//type ConnChannel = Sender<StreamEvent>;
-
-pub struct UtpSocket {//<P> {
+pub struct UtpSocket {
     conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>,
-    //conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
-    //accepts: Sender<Accept<P>>,
-    //accepts_with_cid: Sender<(Accept<P>, ConnectionId<P>)>,
-    //socket_events: Sender<SocketEvent<P>>,
+    incoming: Receiver<UtpStream>
 }
 
 impl UtpSocket {
@@ -27,21 +23,9 @@ impl UtpSocket {
         Ok(Self::with_socket(socket))
     }
 
-    pub fn with_socket/*<S>*/(mut socket: UdpSocket) -> Self
-    //where
-    //    S: UdpSocket<P> + 'static,
-    {
-        let conns = Arc::new(RwLock::new(HashMap::new()));
-        //let (socket_event_tx, mut socket_event_rx) = mpsc::channel();
-        //let (accepts_tx, mut accepts_rx) = mpsc::channel();
-        //let (accepts_with_cid_tx, mut accepts_with_cid_rx) = mpsc::channel();
-
-        let self_ = Self {
-            conns: Arc::clone(&conns),
-            //accepts: accepts_tx,
-            //accepts_with_cid: accepts_with_cid_tx,
-            //socket_events: socket_event_tx.clone(),
-        };
+    pub fn with_socket(mut socket: UdpSocket) -> Self {
+        let (incoming_tx, incoming_rx) = mpsc::channel();
+        let (pool_tx, pool_rx) = mpsc::channel();
 
         thread::spawn(move || {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
@@ -59,41 +43,79 @@ impl UtpSocket {
                     }
                 };
 
-                match conns.read().unwrap().get(&packet.conn_id()) {
-                    Some(conn) => {
-                        conn.send(StreamEvent::Incoming(packet)).unwrap();
+                pool_tx.send((packet, src_addr)).unwrap();
+            }
+        });
 
-                    }
-                    None => {
-                        if packet.packet_type() == UtpPacketType::Syn {
-                            let cid = packet.conn_id();
+        let conns = Arc::new(RwLock::new(HashMap::new()));
 
-                            println!("{:?}", packet);
+        let self_ = Self {
+            conns: Arc::clone(&conns),
+            incoming: incoming_rx
+        };
 
-                            let (tx, rx) = mpsc::channel();
-                            conns.write().unwrap().insert(cid, tx);
+        thread::spawn(move || {
+            loop {
+                match pool_rx.try_recv() {
+                    Ok((packet, src_addr)) => {
+                        //Self::on_receive();
+                        match conns.read().unwrap().get(&packet.conn_id()) {
+                            Some(conn) => {
+                                conn.send(StreamEvent::Incoming(packet)).unwrap();
 
-                            let stream = UtpStream::new(cid, rx);
+                            }
+                            None => {
+                                if packet.packet_type() == UtpPacketType::Syn {
+                                    let cid = packet.conn_id();
 
+                                    println!("{:?}", packet);
 
+                                    let (tx, rx) = mpsc::channel();
+                                    conns.write().unwrap().insert(cid, tx);
+                                    incoming_tx.send(UtpStream::new(cid, rx)).unwrap();
 
-
+                                }
+                            }
                         }
+
+
                     }
+                    Err(TryRecvError::Empty) => {
+                    }
+                    Err(TryRecvError::Disconnected) => break
                 }
-
-
-
-
-
             }
         });
 
         self_
     }
+/*
+    fn on_receive(packet: UtpPacket, src_addr: SocketAddr, conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>) {
+        match conns.read().unwrap().get(&packet.conn_id()) {
+            Some(conn) => {
+                conn.send(StreamEvent::Incoming(packet)).unwrap();
 
-    pub fn accept(&self) -> io::Result<UtpStream> {
-        todo!()
+            }
+            None => {
+                if packet.packet_type() == UtpPacketType::Syn {
+                    let cid = packet.conn_id();
+
+                    println!("{:?}", packet);
+
+                    let (tx, rx) = mpsc::channel();
+                    conns.write().unwrap().insert(cid, tx);
+
+                    let stream = UtpStream::new(cid, rx);
+
+                }
+            }
+        }
+    }
+*/
+    pub fn incoming(&mut self) -> Incoming<'_> {
+        Incoming {
+            listener: self
+        }
     }
 
     pub fn connect(&self) -> io::Result<UtpStream> {
@@ -104,21 +126,20 @@ impl UtpSocket {
         todo!()
     }
 }
-/*
-impl<P> Drop for UtpSocket<P> {
-    fn drop(&mut self) {
-        for conn in self.conns.read().unwrap().values() {
-            let _ = conn.send(StreamEvent::Shutdown);
+
+pub struct Incoming<'a> {
+    listener: &'a mut UtpSocket,
+}
+
+impl Iterator for Incoming<'_> {
+
+    type Item = UtpStream;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.listener.incoming.recv() {
+            Ok(stream) => Some(stream),
+            Err(e) => None,
         }
     }
 }
-*/
-
-
-
-//struct Accept<P> {
-    //stream: oneshot::Sender<io::Result<UtpStream<P>>>,
-    //config: ConnectionConfig,
-//}
-
 
