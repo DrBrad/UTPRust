@@ -11,39 +11,45 @@ use crate::utp::stream::UtpStream;
 
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
-pub struct UtpSocket<P> {
-    conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
-    accepts: Sender<Accept<P>>,
-    accepts_with_cid: Sender<(Accept<P>, ConnectionId<P>)>,
-    socket_events: Sender<SocketEvent<P>>,
+pub struct UtpSocket {//<P> {
+    //conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
+    //accepts: Sender<Accept<P>>,
+    //accepts_with_cid: Sender<(Accept<P>, ConnectionId<P>)>,
+    //socket_events: Sender<SocketEvent<P>>,
 }
+/*
+impl UtpSocket {//<SocketAddr> {
 
-impl UtpSocket<SocketAddr> {
     pub fn bind(addr: SocketAddr) -> io::Result<Self> {
         let socket = UdpSocket::bind(addr)?;
         Ok(Self::with_socket(socket))
     }
 }
-
-impl<P> UtpSocket<P>
+*/
+impl/*<P>*/ UtpSocket//<P>
 //where
 //    P: ConnectionPeer + 'static,
 {
 
-    pub fn with_socket<S>(mut socket: S) -> Self
+    pub fn bind(addr: SocketAddr) -> io::Result<Self> {
+        let socket = UdpSocket::bind(addr)?;
+        Ok(Self::with_socket(socket))
+    }
+
+    pub fn with_socket(mut socket: UdpSocket) -> Self
     //where
     //    S: UdpSocket<P> + 'static,
     {
-        let conns = Arc::new(RwLock::new(HashMap::new()));
-        let (socket_event_tx, mut socket_event_rx) = mpsc::channel();
-        let (accepts_tx, mut accepts_rx) = mpsc::channel();
-        let (accepts_with_cid_tx, mut accepts_with_cid_rx) = mpsc::channel();
+        //let conns = Arc::new(RwLock::new(HashMap::new()));
+        //let (socket_event_tx, mut socket_event_rx) = mpsc::channel();
+        //let (accepts_tx, mut accepts_rx) = mpsc::channel();
+        //let (accepts_with_cid_tx, mut accepts_with_cid_rx) = mpsc::channel();
 
         let self_ = Self {
-            conns: Arc::clone(&conns),
-            accepts: accepts_tx,
-            accepts_with_cid: accepts_with_cid_tx,
-            socket_events: socket_event_tx.clone(),
+            //conns: Arc::clone(&conns),
+            //accepts: accepts_tx,
+            //accepts_with_cid: accepts_with_cid_tx,
+            //socket_events: socket_event_tx.clone(),
         };
 
         thread::spawn(move || {
@@ -54,15 +60,19 @@ impl<P> UtpSocket<P>
                     socket.recv_from(&mut buf).expect("Failed to receive message")
                 };
 
-                let packet = UtpPacket::decode(&buf[..size])?;
-                println!("{packet}");
+                let packet = match UtpPacket::decode(&buf[..size]) {
+                    Ok(pkt) => pkt,
+                    Err(..) => {
+                        //tracing::warn!(?src, "unable to decode uTP packet");
+                        continue;
+                    }
+                };
 
 
             }
         });
 
-
-        todo!()
+        self_
     }
 
     pub fn accept(&self) -> io::Result<UtpStream> {
@@ -73,7 +83,7 @@ impl<P> UtpSocket<P>
         todo!()
     }
 
-    fn generate_cid(&self) -> ConnectionId<P> {
+    fn generate_cid(&self) {//-> ConnectionId/*<P>*/ {
         todo!()
     }
 }
@@ -88,11 +98,11 @@ impl<P> Drop for UtpSocket<P> {
 */
 
 
-type ConnChannel = Sender<StreamEvent>;
+//type ConnChannel = Sender<StreamEvent>;
 
-struct Accept<P> {
+//struct Accept<P> {
     //stream: oneshot::Sender<io::Result<UtpStream<P>>>,
     //config: ConnectionConfig,
-}
+//}
 
 

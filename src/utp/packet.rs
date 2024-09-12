@@ -424,11 +424,11 @@ impl From<UtpPacketType> for u8 {
 
     fn from(value: UtpPacketType) -> u8 {
         match value {
-            Self::Data => 0,
-            Self::Fin => 1,
-            Self::State => 2,
-            Self::Reset => 3,
-            Self::Syn => 4,
+            UtpPacketType::Data => 0,
+            UtpPacketType::Fin => 1,
+            UtpPacketType::State => 2,
+            UtpPacketType::Reset => 3,
+            UtpPacketType::Syn => 4,
         }
     }
 }
@@ -646,13 +646,6 @@ impl fmt::Display for ExtensionError {
         };
 
         write!(f, "{}", s)
-    }
-}
-
-impl fmt::Display for InvalidPacketType {
-
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "invalid uTP packet type")
     }
 }
 
