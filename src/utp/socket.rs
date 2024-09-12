@@ -2,18 +2,20 @@ use std::collections::HashMap;
 use std::{io, thread};
 use std::fmt::{Debug, Display};
 use std::net::{SocketAddr, UdpSocket};
-use std::sync::{Arc, RwLock};
+use std::sync::{mpsc, Arc, RwLock};
+use std::sync::mpsc::{Receiver, Sender};
 use crate::utp::cid::ConnectionId;
+use crate::utp::event::{SocketEvent, StreamEvent};
 use crate::utp::packet::UtpPacket;
 use crate::utp::stream::UtpStream;
 
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
 pub struct UtpSocket<P> {
-    //conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
-    //accepts: UnboundedSender<Accept<P>>,
-    //accepts_with_cid: UnboundedSender<(Accept<P>, ConnectionId<P>)>,
-    //socket_events: UnboundedSender<SocketEvent<P>>,
+    conns: Arc<RwLock<HashMap<ConnectionId<P>, ConnChannel>>>,
+    accepts: Sender<Accept<P>>,
+    accepts_with_cid: Sender<(Accept<P>, ConnectionId<P>)>,
+    socket_events: Sender<SocketEvent<P>>,
 }
 
 impl UtpSocket<SocketAddr> {
@@ -32,6 +34,17 @@ impl<P> UtpSocket<P>
     //where
     //    S: UdpSocket<P> + 'static,
     {
+        let conns = Arc::new(RwLock::new(HashMap::new()));
+        let (socket_event_tx, mut socket_event_rx) = mpsc::channel();
+        let (accepts_tx, mut accepts_rx) = mpsc::channel();
+        let (accepts_with_cid_tx, mut accepts_with_cid_rx) = mpsc::channel();
+
+        let self_ = Self {
+            conns: Arc::clone(&conns),
+            accepts: accepts_tx,
+            accepts_with_cid: accepts_with_cid_tx,
+            socket_events: socket_event_tx.clone(),
+        };
 
         thread::spawn(move || {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
@@ -42,8 +55,7 @@ impl<P> UtpSocket<P>
                 };
 
                 let packet = UtpPacket::decode(&buf[..size])?;
-                println!("{packet}")
-
+                println!("{packet}");
 
 
             }
@@ -74,5 +86,13 @@ impl<P> Drop for UtpSocket<P> {
     }
 }
 */
+
+
+type ConnChannel = Sender<StreamEvent>;
+
+struct Accept<P> {
+    //stream: oneshot::Sender<io::Result<UtpStream<P>>>,
+    //config: ConnectionConfig,
+}
 
 
