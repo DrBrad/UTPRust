@@ -2,4 +2,5 @@ pub mod socket;
 pub mod stream;
 pub mod packet;
 pub mod event;
-mod time;
+pub mod time;
+pub mod conn;
