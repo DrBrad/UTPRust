@@ -80,8 +80,6 @@ impl UtpSocket {
                                     conns.write().unwrap().insert(cid, tx);
 
                                     incoming_tx.send(UtpStream::new(cid, rx)).unwrap();
-
-                                    println!("asdasd");
                                 }
                             }
                         }
