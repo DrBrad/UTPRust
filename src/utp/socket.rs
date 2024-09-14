@@ -12,7 +12,7 @@ use crate::utp::stream::UtpStream;
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
 pub struct UtpSocket {
-    conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>,
+    conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>, //sawp this with Connection...
     incoming: Receiver<UtpStream>
 }
 
@@ -66,7 +66,8 @@ impl UtpSocket {
                                 //EVENT STUFF HERE...
 
 
-                                conn.send(StreamEvent::Incoming(packet)).unwrap();
+
+                                //conn.send(StreamEvent::Incoming(packet)).unwrap();
 
                             }
                             None => {
