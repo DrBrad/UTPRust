@@ -1,14 +1,14 @@
 use crate::utp::packet::{UtpPacket, UtpPacketType};
 
 pub struct Connection {
-
+    reply_micro: u32
 }
 
 impl Connection {
 
     pub fn new() -> Self {
         Self {
-
+            reply_micro: 0
         }
     }
 
