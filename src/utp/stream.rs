@@ -11,7 +11,7 @@ pub struct UtpStream {
 
 impl UtpStream {
 
-    pub fn new(connection_id: u16, stream_events: Receiver<StreamEvent>) -> Self {
+    pub fn new(connection_id: u16/*, stream_events: Receiver<StreamEvent>*/) -> Self {
         Self {
             connection_id,
             //stream_events
