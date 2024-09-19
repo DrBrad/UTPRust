@@ -1,7 +1,5 @@
 use std::io;
 use std::io::{Read, Write};
-use std::sync::mpsc::Receiver;
-use crate::utp::event::StreamEvent;
 
 pub struct UtpStream {
     connection_id: u16,
