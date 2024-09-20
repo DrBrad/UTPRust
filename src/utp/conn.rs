@@ -49,7 +49,7 @@ impl Connection {
     }
 
     fn on_syn(&self, seq_num: u16) {
-
+        //IF FIRST...
     }
 
     fn on_state(&self, seq_num: u16, ack_num: u16) {
