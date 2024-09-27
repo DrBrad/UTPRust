@@ -68,4 +68,8 @@ impl Connection {
     fn on_reset(&self) {
 
     }
+
+    fn retransmit_lost_packets(now: u32) {
+
+    }
 }
