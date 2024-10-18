@@ -30,7 +30,7 @@ struct UtpPacketHeader {
     ts_diff_micros: u32,
     window_size: u32,
     seq_num: u16,
-    ack_num: u16,
+    ack_num: u16
 }
 
 impl UtpPacketHeader {
