@@ -19,8 +19,7 @@ pub struct UtpSocket {
 impl UtpSocket {
 
     pub fn bind(addr: SocketAddr) -> io::Result<Self> {
-        let socket = UdpSocket::bind(addr)?;
-        Ok(Self::with_socket(socket))
+        Ok(Self::with_socket(UdpSocket::bind(addr)?))
     }
 
     pub fn with_socket(mut socket: UdpSocket) -> Self {
@@ -80,7 +79,7 @@ impl UtpSocket {
                                     //conns.write().unwrap().insert(cid, tx);
                                     conns.write().unwrap().insert(cid, tx);
 
-                                    incoming_tx.send(UtpStream::new(cid, rx)).unwrap();
+                                    //incoming_tx.send(UtpStream::new(cid, rx)).unwrap();
                                 }
                             }
                         }
