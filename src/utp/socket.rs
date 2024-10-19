@@ -14,7 +14,7 @@ const MAX_AWAITING_CONNECTION_TIMEOUT: Duration = Duration::from_secs(20);
 
 pub struct UtpSocket {
     //conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>, //swap this with Connection...
-    //incoming: Receiver<UtpStream>
+    incoming: Receiver<UtpStream>
 }
 
 impl UtpSocket {
@@ -26,9 +26,46 @@ impl UtpSocket {
     pub fn with_socket(mut socket: UdpSocket) -> Self {
         //let conns = Arc::new(RwLock::new(HashMap::new()));
 
+        let (incoming_tx, incoming_rx) = channel();
+
+        //DO WE NEED 2 THREADS...?
+
+        thread::spawn(move || {
+            let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
+
+            loop {
+                let (size, src_addr) = {
+                    socket.recv_from(&mut buf).expect("Failed to receive message")
+                };
+
+                /*let packet = */match UtpPacket::decode(&buf[..size]) {
+                    Ok(packet) => /*packet*/{
+                        match packet.conn_id() {
+                            Some(conn_id) => {
+
+                            },
+                            None => {
+
+                            }
+                        }
+                    },
+                    Err(..) => {
+                        //tracing::warn!(?src, "unable to decode uTP packet");
+                        continue;
+                    }
+                };
+
+                /*
+                pool_tx.send((packet, src_addr)).unwrap();
+                */
+            }
+        });
+
+
+
         let self_ = Self {
             //conns: Arc::clone(&conns),
-            //incoming: incoming_rx
+            incoming: incoming_rx
         };
 
         self_
