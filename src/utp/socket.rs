@@ -40,14 +40,6 @@ impl UtpSocket {
 
                 /*let packet = */match UtpPacket::decode(&buf[..size]) {
                     Ok(packet) => /*packet*/{
-                        match packet.conn_id() {
-                            Some(conn_id) => {
-
-                            },
-                            None => {
-
-                            }
-                        }
                     },
                     Err(..) => {
                         //tracing::warn!(?src, "unable to decode uTP packet");
