@@ -40,8 +40,10 @@ impl UtpSocket {
 
                 /*let packet = */match UtpPacket::decode(&buf[..size]) {
                     Ok(packet) => /*packet*/{
+
                     },
                     Err(..) => {
+                        eprintln!("Unable to decode uTP packet.");
                         //tracing::warn!(?src, "unable to decode uTP packet");
                         continue;
                     }
