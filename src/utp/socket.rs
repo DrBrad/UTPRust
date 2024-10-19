@@ -4,12 +4,13 @@ use std::fmt::{Debug, Display};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{mpsc, Arc, RwLock};
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::utp::event::{SocketEvent, StreamEvent};
 use crate::utp::packet::{UtpPacket, UtpPacketType};
 use crate::utp::stream::UtpStream;
 
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
+const MAX_AWAITING_CONNECTION_TIMEOUT: Duration = Duration::from_secs(20);
 
 pub struct UtpSocket {
     //conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>, //swap this with Connection...
