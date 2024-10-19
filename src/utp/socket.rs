@@ -12,8 +12,8 @@ use crate::utp::stream::UtpStream;
 const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 
 pub struct UtpSocket {
-    conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>, //swap this with Connection...
-    incoming: Receiver<UtpStream>
+    //conns: Arc<RwLock<HashMap<u16, Sender<StreamEvent>>>>, //swap this with Connection...
+    //incoming: Receiver<UtpStream>
 }
 
 impl UtpSocket {
@@ -23,75 +23,12 @@ impl UtpSocket {
     }
 
     pub fn with_socket(mut socket: UdpSocket) -> Self {
-        let (incoming_tx, incoming_rx) = channel();
-        let (pool_tx, pool_rx) = channel();
-
-        thread::spawn(move || {
-            let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
-
-            loop {
-                let (size, src_addr) = {
-                    socket.recv_from(&mut buf).expect("Failed to receive message")
-                };
-
-                let packet = match UtpPacket::decode(&buf[..size]) {
-                    Ok(packet) => packet,
-                    Err(..) => {
-                        //tracing::warn!(?src, "unable to decode uTP packet");
-                        continue;
-                    }
-                };
-
-                pool_tx.send((packet, src_addr)).unwrap();
-            }
-        });
-
-        let conns = Arc::new(RwLock::new(HashMap::new()));
+        //let conns = Arc::new(RwLock::new(HashMap::new()));
 
         let self_ = Self {
-            conns: Arc::clone(&conns),
-            incoming: incoming_rx
+            //conns: Arc::clone(&conns),
+            //incoming: incoming_rx
         };
-
-        thread::spawn(move || {
-            loop {
-                match pool_rx.try_recv() {
-                    Ok((packet, src_addr)) => {
-                        //Self::on_receive();
-                        let conn = conns.read().unwrap().get(&packet.conn_id()).cloned();
-                        match conn {
-                            Some(conn) => {
-
-                                //EVENT STUFF HERE...
-
-
-
-                                //conn.send(StreamEvent::Incoming(packet)).unwrap();
-
-                            }
-                            None => {
-                                if packet.packet_type() == UtpPacketType::Syn {
-                                    let cid = packet.conn_id();
-
-                                    println!("{:?}", packet);
-
-                                    let (tx, rx) = channel();
-                                    //conns.write().unwrap().insert(cid, tx);
-                                    conns.write().unwrap().insert(cid, tx);
-
-                                    //incoming_tx.send(UtpStream::new(cid, rx)).unwrap();
-                                }
-                            }
-                        }
-
-
-                    }
-                    Err(TryRecvError::Empty) => {
-                    }
-                    Err(TryRecvError::Disconnected) => break
-                }
-            }
-        });
 
         self_
     }
@@ -125,6 +62,10 @@ impl UtpSocket {
     }
 
     pub fn connect(&self) -> io::Result<UtpStream> {
+        todo!()
+    }
+
+    pub fn total_connections(&self) -> usize {
         todo!()
     }
 
