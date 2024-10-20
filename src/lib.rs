@@ -27,6 +27,8 @@ mod tests {
 
         }
 
+        //close stream
+
 
 
 
