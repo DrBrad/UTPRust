@@ -5,6 +5,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::sync::{mpsc, Arc, RwLock};
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use crate::utp::conn::Connection;
 use crate::utp::event::{SocketEvent, StreamEvent};
 use crate::utp::packet::{UtpPacket, UtpPacketType};
 use crate::utp::stream::UtpStream;
@@ -30,6 +31,8 @@ impl UtpSocket {
 
         //DO WE NEED 2 THREADS...?
 
+        let conn = Connection::new();
+
         thread::spawn(move || {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
 
@@ -40,6 +43,7 @@ impl UtpSocket {
 
                 /*let packet = */match UtpPacket::decode(&buf[..size]) {
                     Ok(packet) => /*packet*/{
+                        conn.on_packet(packet);
 
                     },
                     Err(..) => {
