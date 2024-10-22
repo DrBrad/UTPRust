@@ -105,7 +105,7 @@ impl UtpSocket {
         todo!()
     }
 
-    fn generate_cid(&self) {//-> ConnectionId/*<P>*/ {
+    fn generate_cid(&self) -> u16 {//-> ConnectionId/*<P>*/ {
         todo!()
     }
 }
