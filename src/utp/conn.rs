@@ -44,8 +44,6 @@ impl Connection {
         }
 
         //self.retransmit_lost_packets(now);
-
-
     }
 
     fn on_syn(&self, seq_num: u16) {
