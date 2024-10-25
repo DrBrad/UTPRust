@@ -25,13 +25,13 @@ impl UtpSocket {
     }
 
     pub fn with_socket(mut socket: UdpSocket) -> Self {
-        //let conns = Arc::new(RwLock::new(HashMap::new()));
+        let conns = Arc::new(RwLock::new(HashMap::new()));
 
         let (incoming_tx, incoming_rx) = channel();
 
         //DO WE NEED 2 THREADS...?
 
-        let conn = Connection::new();
+        //let conns = Connection::new();
 
         thread::spawn(move || {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
@@ -43,7 +43,25 @@ impl UtpSocket {
 
                 /*let packet = */match UtpPacket::decode(&buf[..size]) {
                     Ok(packet) => /*packet*/{
-                        conn.on_packet(packet);
+                        match conns.read().unwrap().get(&packet.conn_id()) {
+                            Some(conn) => {
+                                //conn.send(StreamEvent::Incoming(packet)).unwrap();
+                                conn.on_packet(packet);
+                            }
+                            None => {
+                                if packet.packet_type() == UtpPacketType::Syn {
+                                    let cid = packet.conn_id();
+
+                                    println!("{:?}", packet);
+
+                                    let (tx, rx) = channel();
+                                    conns.write().unwrap().insert(cid, tx);
+
+                                    let stream = UtpStream::new(cid/*, rx*/);
+                                }
+                            }
+                        }
+
 
                     },
                     Err(..) => {
