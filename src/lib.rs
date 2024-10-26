@@ -8,6 +8,7 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
+
     use std::io::{Read, Write};
     use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
     use std::thread;
@@ -121,9 +122,6 @@ mod tests {
             }
         }
 
-        loop {
-
-        }
         //assert_eq!(result, 4);
         */
     }

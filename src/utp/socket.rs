@@ -41,8 +41,8 @@ impl UtpSocket {
                     socket.recv_from(&mut buf).expect("Failed to receive message")
                 };
 
-                /*let packet = */match UtpPacket::decode(&buf[..size]) {
-                    Ok(packet) => /*packet*/{
+                match UtpPacket::decode(&buf[..size]) {
+                    Ok(packet) => {
                         match conns.read().unwrap().get(&packet.conn_id()) {
                             Some(conn) => {
                                 //conn.send(StreamEvent::Incoming(packet)).unwrap();
