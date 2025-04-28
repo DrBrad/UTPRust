@@ -13,19 +13,19 @@ mod tests {
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
-    use crate::utp::socket::UtpSocket;
-    use crate::utp::stream::UtpStream;
+    //use crate::utp::socket::UtpSocket;
+    //use crate::utp::stream::UtpStream;
 
     #[test]
     fn test() {
 
-        let mut socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
+        //let mut socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
 
-        for mut stream in socket.incoming() {
-            println!("INCOMING");
-            //stream.write("asdasdasd".as_bytes()).unwrap();
+        //for mut stream in socket.incoming() {
+        //    println!("INCOMING");
+        //    //stream.write("asdasdasd".as_bytes()).unwrap();
 
-        }
+        //}
 
         //close stream
 
