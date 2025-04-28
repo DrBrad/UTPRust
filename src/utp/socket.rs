@@ -11,23 +11,30 @@ const MAX_UDP_PAYLOAD_SIZE: usize = u16::MAX as usize;
 const MAX_AWAITING_CONNECTION_TIMEOUT: Duration = Duration::from_secs(20);
 
 pub struct UtpSocket {
+    incoming: Receiver<UtpStream>
 }
 
 impl UtpSocket {
 
     pub fn bind(addr: SocketAddr) -> io::Result<Self> {
-        Ok(Self {
-
-        })
+        Ok(Self::with_socket(UdpSocket::bind(addr)?))
     }
 
-    /*
-    pub fn incoming(&mut self) -> Incoming<'_> {
-        Incoming {
-            listener: self
+    pub fn with_socket(mut socket: UdpSocket) -> Self {
+        let (tx, rx) = channel();
+
+        thread::spawn(move || {
+            let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
+
+
+
+        });
+
+        Self {
+            //conns: Arc::clone(&conns),
+            incoming: rx
         }
     }
-    */
 
     pub fn connect(&self) -> io::Result<UtpStream> {
         todo!()
