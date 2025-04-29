@@ -29,7 +29,7 @@ mod tests {
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
-    use crate::utp::utp_listener::UtpListener;
+    use crate::utp::socket::UtpSocket;
     //use crate::utp::socket::UtpSocket;
     //use crate::utp::stream::UtpStream;
 
@@ -49,7 +49,7 @@ mod tests {
 
 
 
-        let mut listener = UtpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
+        let mut listener = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
 
         for socket in listener.incoming() {
             match socket {
