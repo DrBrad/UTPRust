@@ -56,11 +56,41 @@ mod tests {
 
         //close stream
 
+
+
+
         let mut socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
 
         for mut stream in socket.incoming() {
 
         }
+
+
+
+
+
+
+
+
+        //TcpStream::connect();
+
+
+        let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
+        for socket in listener.incoming() {
+            match socket {
+                Ok(mut stream) => {
+                    stream.write("asdasd".as_bytes());
+                    stream.flush().unwrap();
+                }
+                Err(_) => {
+
+                }
+            }
+        }
+
+
+
+
 
 
 
@@ -103,23 +133,6 @@ mod tests {
 
 
 
-        /*
-        TcpStream::connect()
-
-
-        let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).expect("Failed to bind");
-        for socket in listener.incoming() {
-            match socket {
-                Ok(mut stream) => {
-                    stream.write("asdasd".as_bytes());
-                    stream.flush().unwrap();
-                }
-                Err(_) => {
-
-                }
-            }
-        }
-        */
 
 
 

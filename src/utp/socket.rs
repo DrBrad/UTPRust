@@ -29,7 +29,7 @@ impl UtpSocket {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
 
             loop {
-                let (size, src_addr) = socket.recv_from(&mut buf)?;
+                let (size, src_addr) = socket.recv_from(&mut buf).unwrap();
 
                 match UtpPacket::decode(&buf[..size]) {
                     Ok(packet) => {
