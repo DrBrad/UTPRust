@@ -23,12 +23,14 @@ impl UtpSocket {
     pub fn with_socket(mut socket: UdpSocket) -> Self {
         let (tx, rx) = channel();
 
+        /*
         thread::spawn(move || {
             let mut buf = [0; MAX_UDP_PAYLOAD_SIZE];
 
 
 
         });
+        */
 
         Self {
             //conns: Arc::clone(&conns),

@@ -6,6 +6,23 @@ pub mod utils;
 //          <----------- STATE
 //     DATA ============ DATA
 
+/*
+Theory to make this without requiring our own thread.
+
+each stream will read via socket as per usual but it will be handled on socket.rs file
+once the socket receives the file it will determine if packet is
+- new connection
+- socket
+
+if it is for the socket reading the packet will be returned otherwise it will be sent to RX of
+that stream
+
+checking for new connections will also check RX and try read
+
+- this method will require non-blocking io for the socket
+- we can re-implement blocking through our read function
+*/
+
 #[cfg(test)]
 mod tests {
 
