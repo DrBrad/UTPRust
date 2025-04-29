@@ -25,6 +25,12 @@ checking for new connections will also check RX and try read
 - downfall is dropping good packets...
 */
 
+
+//REDO CONN...
+
+
+
+
 #[cfg(test)]
 mod tests {
 
@@ -33,6 +39,7 @@ mod tests {
     use std::thread;
     use std::thread::sleep;
     use std::time::Duration;
+    use crate::utp::socket::UtpSocket;
     //use crate::utp::socket::UtpSocket;
     //use crate::utp::stream::UtpStream;
 
@@ -49,6 +56,11 @@ mod tests {
 
         //close stream
 
+        let mut socket = UtpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 7070))).unwrap();
+
+        for mut stream in socket.incoming() {
+
+        }
 
 
 
