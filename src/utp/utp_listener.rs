@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, thread};
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use crate::utp::utp_stream::UtpStream;
 
@@ -10,6 +10,10 @@ impl UtpListener {
 
     pub fn bind<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
         let socket = UdpSocket::bind(addr)?;
+
+        thread::spawn(move || {
+
+        });
 
         Ok(Self {
             socket

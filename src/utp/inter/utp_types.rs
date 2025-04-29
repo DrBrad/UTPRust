@@ -4,7 +4,7 @@ use std::io;
 pub enum UtpTypes {
     Data,
     Fin,
-    Ack, //Also known as State
+    State, //Also known as State
     Reset,
     Syn
 }
@@ -12,7 +12,7 @@ pub enum UtpTypes {
 impl UtpTypes {
 
     pub fn from_code(value: &u8) -> io::Result<Self> {
-        for _type in [Self::Data, Self::Fin, Self::Ack, Self::Reset, Self::Syn] {
+        for _type in [Self::Data, Self::Fin, Self::State, Self::Reset, Self::Syn] {
             if _type.get_code().eq(value) {
                 return Ok(_type);
             }
@@ -25,7 +25,7 @@ impl UtpTypes {
         match self {
             Self::Data => 0,
             Self::Fin => 1,
-            Self::Ack => 2,
+            Self::State => 2,
             Self::Reset => 3,
             Self::Syn => 4,
         }
