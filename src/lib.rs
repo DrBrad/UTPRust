@@ -21,6 +21,8 @@ checking for new connections will also check RX and try read
 
 - this method will require non-blocking io for the socket
 - we can re-implement blocking through our read function
+
+- downfall is dropping good packets...
 */
 
 #[cfg(test)]
